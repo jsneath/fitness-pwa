@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 min-h-screen;
+  }
+
+  /* Prevent pull-to-refresh on mobile */
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 active:scale-95;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400;
+  }
+
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 active:bg-green-800;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 active:bg-red-800;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4;
+  }
+
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+}
+
+/* Animations */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
