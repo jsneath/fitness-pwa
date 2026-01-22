@@ -119,7 +119,7 @@ export default function ProgrammeDetailPage() {
       <>
         <Header title="Programme" showBack />
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading...</div>
+          <div className="animate-pulse-soft text-slate-400">Loading...</div>
         </div>
       </>
     )
@@ -132,20 +132,41 @@ export default function ProgrammeDetailPage() {
       <div className="space-y-4 pt-4">
         {/* Week Progress */}
         {programme.isActive === 1 && (
-          <Card>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-gray-900">
-                {isComplete ? 'Programme Complete!' : `Week ${programme.currentWeek || 1} of ${programme.durationWeeks}`}
-              </h3>
-              {!isComplete && (
-                <span className="text-sm text-gray-500">
-                  {programme.daysPerWeek} training days
-                </span>
-              )}
+          <Card className="animate-fade-in">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+                  isComplete
+                    ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/30'
+                    : 'bg-gradient-to-br from-indigo-400 to-purple-500 shadow-indigo-500/30'
+                }`}>
+                  {isComplete ? (
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  ) : (
+                    <span className="text-white font-bold text-lg">{programme.currentWeek || 1}</span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">
+                    {isComplete ? 'Programme Complete!' : `Week ${programme.currentWeek || 1} of ${programme.durationWeeks}`}
+                  </h3>
+                  {!isComplete && (
+                    <p className="text-sm text-slate-500">
+                      {programme.daysPerWeek} training days
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="h-3 bg-gray-200 rounded-full overflow-hidden mb-3">
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
               <div
-                className={`h-full rounded-full transition-all ${isComplete ? 'bg-green-500' : 'bg-blue-600'}`}
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isComplete
+                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                }`}
                 style={{
                   width: `${Math.min(100, ((programme.currentWeek || 1) / programme.durationWeeks) * 100)}%`
                 }}
@@ -165,7 +186,7 @@ export default function ProgrammeDetailPage() {
 
         {/* Training Days */}
         <div className="space-y-3">
-          <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Training Days
           </h2>
           {templates && templates.length > 0 ? (
@@ -185,8 +206,13 @@ export default function ProgrammeDetailPage() {
             ))
           ) : (
             <Card className="text-center py-8">
-              <p className="text-gray-500">No workout days yet</p>
-              <p className="text-sm text-gray-400 mt-1">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </div>
+              <p className="text-slate-600 font-medium">No workout days yet</p>
+              <p className="text-sm text-slate-400 mt-1">
                 Add {programme.daysPerWeek} training days for your week
               </p>
             </Card>
@@ -197,7 +223,7 @@ export default function ProgrammeDetailPage() {
         {(!templates || templates.length < programme.daysPerWeek) && (
           <button
             onClick={() => setShowAddTemplate(true)}
-            className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-600 transition-colors"
+            className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50 transition-all duration-300"
           >
             + Add Day {(templates?.length || 0) + 1}
           </button>
@@ -207,7 +233,7 @@ export default function ProgrammeDetailPage() {
         {programme.isActive === 1 && (
           <button
             onClick={() => setShowEndProgramme(true)}
-            className="w-full py-3 text-red-600 font-medium text-sm"
+            className="w-full py-3 text-red-500 font-medium text-sm hover:text-red-600 transition-colors"
           >
             End Programme Early
           </button>
@@ -264,10 +290,10 @@ export default function ProgrammeDetailPage() {
               <button
                 key={exercise.id}
                 onClick={() => handleAddExerciseToTemplate(exercise)}
-                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 border border-gray-200"
+                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 border border-slate-200 transition-colors"
               >
-                <div className="font-medium text-gray-900">{exercise.name}</div>
-                <div className="text-sm text-gray-500">
+                <div className="font-medium text-slate-800">{exercise.name}</div>
+                <div className="text-sm text-slate-500">
                   {exercise.equipment} • {exercise.muscleGroups.join(', ')}
                 </div>
               </button>
@@ -283,11 +309,18 @@ export default function ProgrammeDetailPage() {
         title="Complete Week"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <div className="text-center py-2">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-slate-600 text-center">
             Mark Week {programme.currentWeek} as complete and advance to Week {programme.currentWeek + 1}?
           </p>
-          <p className="text-sm text-gray-500">
-            Your weights and reps will be used to calculate progressive overload suggestions for next week.
+          <p className="text-sm text-slate-500 text-center">
+            Your weights and reps will be used for progressive overload suggestions.
           </p>
           <div className="flex gap-3">
             <Button
@@ -315,12 +348,18 @@ export default function ProgrammeDetailPage() {
         title="End Programme"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <div className="text-center py-2">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-red-500/30">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-slate-600 text-center">
             Are you sure you want to end this programme early?
           </p>
-          <p className="text-sm text-gray-500">
-            You're currently on Week {programme.currentWeek} of {programme.durationWeeks}.
-            Your workout history will be saved, but this programme will be marked as inactive.
+          <p className="text-sm text-slate-500 text-center">
+            Week {programme.currentWeek} of {programme.durationWeeks}. Your workout history will be saved.
           </p>
           <div className="flex gap-3">
             <Button
@@ -394,31 +433,33 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
   }
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <Card className="p-0 overflow-hidden animate-scale-in">
       <div
-        className="flex items-center justify-between p-4 cursor-pointer"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-            isCompleted ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold shadow-lg ${
+            isCompleted
+              ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/30'
+              : 'bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600'
           }`}>
             {isCompleted ? (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             ) : dayNumber}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-gray-900">{template.name}</h3>
+              <h3 className="font-semibold text-slate-800">{template.name}</h3>
               {isCompleted && (
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
                   Done
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-500">
               {exercises.length} exercises
               {isCompleted && currentWeekWorkout?.date && (
                 <span> • {new Date(currentWeekWorkout.date).toLocaleDateString()}</span>
@@ -427,41 +468,42 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
           </div>
         </div>
         <svg
-          className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          strokeWidth={1.5}
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
       </div>
 
       {isExpanded && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-slate-100">
           {/* Show completed workout sets if done */}
           {isCompleted && completedWorkoutData?.setsByExercise && (
-            <div className="p-4 bg-green-50 border-b border-green-100">
-              <h4 className="text-sm font-medium text-green-800 mb-3">Completed Sets</h4>
+            <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-b border-emerald-100">
+              <h4 className="text-sm font-semibold text-emerald-800 mb-3">Completed Sets</h4>
               <div className="space-y-3">
                 {exercises.map((item) => {
                   const setsForExercise = completedWorkoutData.setsByExercise[item.exerciseId] || []
                   const workingSets = setsForExercise.filter(s => !s.isWarmup)
                   return (
-                    <div key={item.id} className="bg-white rounded-lg p-3">
-                      <div className="font-medium text-gray-900 mb-2">
+                    <div key={item.id} className="bg-white/80 rounded-xl p-3">
+                      <div className="font-medium text-slate-800 mb-2">
                         {item.exercise?.name}
                       </div>
                       {workingSets.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {workingSets.map((set, idx) => (
-                            <span key={idx} className="text-sm bg-gray-100 px-2 py-1 rounded">
+                            <span key={idx} className="text-sm bg-slate-100 px-2.5 py-1 rounded-lg font-medium">
                               {set.weight}kg × {set.reps}
-                              {set.rpe && <span className="text-gray-500"> @{set.rpe}</span>}
+                              {set.rpe && <span className="text-slate-500 font-normal"> @{set.rpe}</span>}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">No sets logged</span>
+                        <span className="text-sm text-slate-400">No sets logged</span>
                       )}
                     </div>
                   )
@@ -476,25 +518,25 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
               {exercises.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between py-2.5 px-3 bg-slate-50 rounded-xl transition-colors hover:bg-slate-100"
                 >
                   <div
                     className="flex-1 cursor-pointer"
                     onClick={() => setEditingExercise(item)}
                   >
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-slate-800">
                       {item.exercise?.name || 'Unknown Exercise'}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-slate-500">
                       {item.targetSets} sets × {item.minReps || 8}-{item.maxReps || 12} reps
                     </div>
                   </div>
                   <button
                     onClick={() => handleRemoveExercise(item.id)}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
@@ -503,16 +545,16 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
           )}
 
           {!isCompleted && exercises.length === 0 && (
-            <div className="p-4 text-center text-gray-500 text-sm">
+            <div className="p-6 text-center text-slate-400 text-sm">
               No exercises added yet
             </div>
           )}
 
-          <div className="flex border-t border-gray-100">
+          <div className="flex border-t border-slate-100">
             {!isCompleted && (
               <button
                 onClick={onAddExercise}
-                className="flex-1 py-3 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                className="flex-1 py-3 text-sm font-semibold text-indigo-500 hover:bg-indigo-50 transition-colors"
               >
                 Add Exercise
               </button>
@@ -520,8 +562,10 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
             {exercises.length > 0 && programme.isActive === 1 && (
               <button
                 onClick={onStartWorkout}
-                className={`flex-1 py-3 text-sm font-medium hover:bg-green-50 border-l border-gray-100 ${
-                  isCompleted ? 'text-gray-500' : 'text-green-600'
+                className={`flex-1 py-3 text-sm font-semibold border-l border-slate-100 transition-colors ${
+                  isCompleted
+                    ? 'text-slate-400 hover:bg-slate-50'
+                    : 'text-emerald-500 hover:bg-emerald-50'
                 }`}
               >
                 {isCompleted ? 'Redo Workout' : 'Start Workout'}
@@ -530,7 +574,7 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
             {!isCompleted && (
               <button
                 onClick={onDelete}
-                className="flex-1 py-3 text-sm font-medium text-red-600 hover:bg-red-50 border-l border-gray-100"
+                className="flex-1 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 border-l border-slate-100 transition-colors"
               >
                 Delete
               </button>
@@ -558,26 +602,26 @@ function EditExerciseModal({ exercise, onClose, onSave }) {
 
   return (
     <Modal isOpen={true} onClose={onClose} title="Edit Exercise">
-      <div className="space-y-4">
-        <div className="font-medium text-gray-900 mb-4">
+      <div className="space-y-5">
+        <div className="font-semibold text-slate-800 text-lg">
           {exercise.exercise?.name}
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">
+          <label className="text-sm font-semibold text-slate-600 block mb-3">
             Target Sets
           </label>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 justify-center">
             <button
               onClick={() => setTargetSets(Math.max(1, targetSets - 1))}
-              className="w-12 h-12 rounded-lg bg-gray-100 text-xl font-bold"
+              className="w-14 h-14 rounded-xl bg-slate-100 text-xl font-bold text-slate-600 hover:bg-slate-200 active:scale-95 transition-all"
             >
               -
             </button>
-            <span className="text-2xl font-bold w-12 text-center">{targetSets}</span>
+            <span className="text-3xl font-bold w-14 text-center text-slate-800">{targetSets}</span>
             <button
               onClick={() => setTargetSets(targetSets + 1)}
-              className="w-12 h-12 rounded-lg bg-gray-100 text-xl font-bold"
+              className="w-14 h-14 rounded-xl bg-slate-100 text-xl font-bold text-slate-600 hover:bg-slate-200 active:scale-95 transition-all"
             >
               +
             </button>
@@ -585,26 +629,26 @@ function EditExerciseModal({ exercise, onClose, onSave }) {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-2">
+          <label className="text-sm font-semibold text-slate-600 block mb-3">
             Rep Range
           </label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 justify-center">
             <input
               type="number"
               value={minReps}
               onChange={(e) => setMinReps(parseInt(e.target.value) || 1)}
-              className="w-20 px-3 py-2 border rounded-lg text-center text-lg font-bold"
+              className="w-20 px-3 py-3 border-2 border-slate-200 rounded-xl text-center text-lg font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
               min="1"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-slate-400 font-medium">to</span>
             <input
               type="number"
               value={maxReps}
               onChange={(e) => setMaxReps(parseInt(e.target.value) || 1)}
-              className="w-20 px-3 py-2 border rounded-lg text-center text-lg font-bold"
+              className="w-20 px-3 py-3 border-2 border-slate-200 rounded-xl text-center text-lg font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
               min="1"
             />
-            <span className="text-gray-500">reps</span>
+            <span className="text-slate-500 font-medium">reps</span>
           </div>
         </div>
 

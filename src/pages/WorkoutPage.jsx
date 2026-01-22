@@ -155,17 +155,24 @@ export default function WorkoutPage() {
         <div className="space-y-6 pt-4">
           {/* Active Programme Quick Start */}
           {activeProgramme && programmeTemplates && programmeTemplates.length > 0 && (
-            <Card>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{activeProgramme.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    Week {activeProgramme.currentWeek || 1} of {activeProgramme.durationWeeks}
-                  </p>
+            <Card className="animate-fade-in">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-800">{activeProgramme.name}</h3>
+                    <p className="text-sm text-slate-500">
+                      Week {activeProgramme.currentWeek || 1} of {activeProgramme.durationWeeks}
+                    </p>
+                  </div>
                 </div>
                 <Link
                   to={`/programmes/${activeProgramme.id}`}
-                  className="text-sm text-blue-600 font-medium"
+                  className="text-sm text-indigo-500 font-semibold hover:text-indigo-600 transition-colors"
                 >
                   View
                 </Link>
@@ -175,16 +182,16 @@ export default function WorkoutPage() {
                   <button
                     key={template.id}
                     onClick={() => handleStartFromTemplate(template)}
-                    className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
                         {index + 1}
                       </div>
-                      <span className="font-medium text-gray-900">{template.name}</span>
+                      <span className="font-medium text-slate-800">{template.name}</span>
                     </div>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </button>
                 ))}
@@ -193,11 +200,13 @@ export default function WorkoutPage() {
           )}
 
           {/* Empty Workout Option */}
-          <div className="text-center py-8">
-            <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <p className="text-gray-500 mb-4">
+          <div className="text-center py-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
+            </div>
+            <p className="text-slate-500 mb-4">
               {activeProgramme ? 'Or start without a template' : 'Start a new workout and log your sets'}
             </p>
             <Button onClick={() => startWorkout()}>
@@ -216,7 +225,7 @@ export default function WorkoutPage() {
         rightAction={
           <button
             onClick={handleCancelWorkout}
-            className="text-red-600 font-medium"
+            className="text-red-500 font-semibold hover:text-red-600 transition-colors"
           >
             Cancel
           </button>
@@ -226,30 +235,30 @@ export default function WorkoutPage() {
       <div className="space-y-4 pt-4 pb-32">
         {/* Week indicator for programme workouts */}
         {templateInfo && (
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+          <div className="flex items-center gap-2 text-sm text-slate-500 animate-fade-in">
+            <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1 rounded-full font-semibold text-xs shadow-lg shadow-indigo-500/30">
               Week {templateInfo.weekNumber}
             </span>
-            <span>Progressive overload suggestions enabled</span>
+            <span>Smart suggestions enabled</span>
           </div>
         )}
 
         {/* Workout Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center py-3">
-            <div className="text-2xl font-bold text-gray-900">{exercises.length}</div>
-            <div className="text-xs text-gray-500">Exercises</div>
-          </Card>
-          <Card className="text-center py-3">
-            <div className="text-2xl font-bold text-gray-900">{totalSets}</div>
-            <div className="text-xs text-gray-500">Sets</div>
-          </Card>
-          <Card className="text-center py-3">
-            <div className="text-2xl font-bold text-gray-900">
+        <div className="grid grid-cols-3 gap-3 animate-fade-in">
+          <div className="stat-card gradient-primary text-center py-3">
+            <div className="text-2xl font-bold text-white">{exercises.length}</div>
+            <div className="text-xs text-white/80">Exercises</div>
+          </div>
+          <div className="stat-card gradient-success text-center py-3">
+            <div className="text-2xl font-bold text-white">{totalSets}</div>
+            <div className="text-xs text-white/80">Sets</div>
+          </div>
+          <div className="stat-card gradient-energy text-center py-3">
+            <div className="text-2xl font-bold text-white">
               {totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume}
             </div>
-            <div className="text-xs text-gray-500">Volume ({weightUnit})</div>
-          </Card>
+            <div className="text-xs text-white/80">Volume ({weightUnit})</div>
+          </div>
         </div>
 
         {/* Exercises */}
@@ -268,7 +277,7 @@ export default function WorkoutPage() {
         {/* Add Exercise Button */}
         <button
           onClick={() => setShowExercisePicker(true)}
-          className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-600 transition-colors"
+          className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50 transition-all duration-300"
         >
           + Add Exercise
         </button>
@@ -309,16 +318,16 @@ export default function WorkoutPage() {
               <button
                 key={exercise.id}
                 onClick={() => handleSelectExercise(exercise)}
-                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 active:bg-gray-100 border border-gray-200"
+                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 border border-slate-200 transition-colors"
               >
-                <div className="font-medium text-gray-900">{exercise.name}</div>
-                <div className="text-sm text-gray-500">
+                <div className="font-medium text-slate-800">{exercise.name}</div>
+                <div className="text-sm text-slate-500">
                   {exercise.equipment} • {exercise.muscleGroups.join(', ')}
                 </div>
               </button>
             ))}
             {filteredExercises.length === 0 && (
-              <p className="text-center text-gray-500 py-4">No exercises found</p>
+              <p className="text-center text-slate-500 py-4">No exercises found</p>
             )}
           </div>
         </div>
@@ -332,8 +341,12 @@ export default function WorkoutPage() {
       >
         <div className="space-y-4">
           <div className="text-center py-4">
-            <div className="text-4xl mb-2">&#128170;</div>
-            <p className="text-gray-600">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-emerald-500/30">
+              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <p className="text-slate-600 font-medium">
               Great workout! You completed {totalSets} sets.
             </p>
           </div>

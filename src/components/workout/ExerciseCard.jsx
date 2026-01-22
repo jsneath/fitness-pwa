@@ -52,18 +52,33 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
   const completedSets = exercise.sets.filter((s) => !s.isWarmup).length
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <Card className="p-0 overflow-hidden animate-scale-in">
       {/* Header */}
       <div
-        className="flex items-center justify-between p-4 cursor-pointer"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{exercise.name}</h3>
-          <p className="text-sm text-gray-500">
-            {completedSets}/{targetSets} sets
-            {totalVolume > 0 && ` • ${totalVolume.toLocaleString()} ${weightUnit}`}
-          </p>
+        <div className="flex items-center gap-3 flex-1">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+            completedSets >= targetSets
+              ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30'
+              : 'bg-slate-100'
+          }`}>
+            {completedSets >= targetSets ? (
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            ) : (
+              <span className="font-bold text-slate-500">{completedSets}/{targetSets}</span>
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-800">{exercise.name}</h3>
+            <p className="text-sm text-slate-500">
+              {completedSets}/{targetSets} sets
+              {totalVolume > 0 && ` • ${totalVolume.toLocaleString()} ${weightUnit}`}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -73,37 +88,40 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
                 removeExerciseFromWorkout(exerciseIndex)
               }
             }}
-            className="p-2 rounded-full hover:bg-gray-100 text-gray-400"
+            className="p-2 rounded-xl hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
             </svg>
           </button>
           <svg
-            className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            strokeWidth={1.5}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
           </svg>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-slate-100">
           {/* Progressive Overload Suggestion */}
           {suggestion && suggestion.hasHistory && exercise.sets.length === 0 && (
-            <div className="p-3 bg-blue-50 border-b border-blue-100">
-              <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+            <div className="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/30">
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+                  </svg>
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-blue-900">
+                  <p className="text-sm font-semibold text-indigo-900">
                     {suggestion.message}
                   </p>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-xs text-indigo-600 mt-1">
                     Last week: {suggestion.lastWeight}{weightUnit} × {suggestion.lastReps} reps
                     {suggestion.lastRpe && ` @ RPE ${suggestion.lastRpe}`}
                   </p>
@@ -115,15 +133,15 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
 
           {/* Target info */}
           {exercise.minReps && exercise.maxReps && exercise.sets.length === 0 && (
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-sm text-gray-600">
-              Target: {exercise.targetSets || 3} sets × {exercise.minReps}-{exercise.maxReps} reps
+            <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 text-sm text-slate-600">
+              <span className="font-medium">Target:</span> {exercise.targetSets || 3} sets × {exercise.minReps}-{exercise.maxReps} reps
             </div>
           )}
 
           {/* Logged Sets */}
           {exercise.sets.length > 0 && (
             <div className="p-4 space-y-2">
-              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide px-2">
+              <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider px-2">
                 <div className="col-span-2">Set</div>
                 <div className="col-span-3">Weight</div>
                 <div className="col-span-2">Reps</div>
@@ -133,29 +151,29 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
               {exercise.sets.map((set, setIndex) => (
                 <div
                   key={setIndex}
-                  className={`grid grid-cols-12 gap-2 items-center py-2 px-2 rounded-lg ${
-                    set.isWarmup ? 'bg-yellow-50' : 'bg-gray-50'
+                  className={`grid grid-cols-12 gap-2 items-center py-2.5 px-3 rounded-xl transition-colors ${
+                    set.isWarmup ? 'bg-amber-50 border border-amber-200' : 'bg-slate-50'
                   }`}
                 >
-                  <div className="col-span-2 font-medium text-gray-700">
+                  <div className="col-span-2 font-bold text-slate-700">
                     {set.isWarmup ? 'W' : setIndex + 1 - exercise.sets.filter((s, i) => i < setIndex && s.isWarmup).length}
                   </div>
-                  <div className="col-span-3 font-semibold">
-                    {set.weight} {weightUnit}
+                  <div className="col-span-3 font-bold text-slate-800">
+                    {set.weight} <span className="text-xs font-normal text-slate-500">{weightUnit}</span>
                   </div>
-                  <div className="col-span-2 font-semibold">
+                  <div className="col-span-2 font-bold text-slate-800">
                     {set.reps}
                   </div>
-                  <div className="col-span-3 text-gray-600">
+                  <div className="col-span-3 text-slate-600">
                     {set.rpe || '-'}
                   </div>
                   <div className="col-span-2 text-right">
                     <button
                       onClick={() => deleteSet(exerciseIndex, setIndex)}
-                      className="p-1 rounded text-gray-400 hover:text-red-500"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
@@ -165,7 +183,7 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
           )}
 
           {/* Set Input */}
-          <div className="p-4 bg-gray-50 border-t border-gray-100">
+          <div className="p-4 bg-slate-50 border-t border-slate-100">
             <SetInput
               onSave={handleSaveSet}
               previousSet={previousSet}
