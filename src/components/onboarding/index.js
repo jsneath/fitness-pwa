@@ -1,0 +1,5 @@
+export { default as WelcomeStep } from './WelcomeStep'
+export { default as GoalsStep } from './GoalsStep'
+export { default as ExperienceStep } from './ExperienceStep'
+export { default as ScheduleStep } from './ScheduleStep'
+export { default as NotificationStep } from './NotificationStep'

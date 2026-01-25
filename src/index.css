@@ -11,6 +11,13 @@
   body {
     @apply text-slate-900 min-h-screen;
     background: #fafafa;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Dark mode body */
+  .dark body {
+    @apply text-slate-100;
+    background: #0f0f14;
   }
 
   /* Prevent pull-to-refresh on mobile */
@@ -47,8 +54,16 @@
     @apply bg-white text-slate-700 border border-slate-200;
   }
 
+  .dark .btn-secondary {
+    @apply bg-dark-surface text-slate-200 border-dark-border;
+  }
+
   .btn-secondary:hover {
     @apply bg-slate-50 border-slate-300;
+  }
+
+  .dark .btn-secondary:hover {
+    @apply bg-dark-surface-elevated border-dark-border-subtle;
   }
 
   .btn-success {
@@ -68,7 +83,7 @@
     box-shadow: 0 4px 14px -4px rgba(239, 68, 68, 0.5);
   }
 
-  /* Glass-morphism cards */
+  /* Glass-morphism cards - Light mode */
   .card {
     @apply bg-white/80 backdrop-blur-lg rounded-2xl p-5;
     box-shadow:
@@ -78,6 +93,16 @@
     border: 1px solid rgba(255, 255, 255, 0.7);
   }
 
+  /* Glass-morphism cards - Dark mode */
+  .dark .card {
+    @apply bg-dark-surface/90 backdrop-blur-lg;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.3),
+      0 10px 15px -3px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   .card-elevated {
     @apply bg-white rounded-2xl p-5;
     box-shadow:
@@ -85,11 +110,24 @@
       0 20px 40px -10px rgba(0, 0, 0, 0.05);
   }
 
-  /* Modern inputs */
+  .dark .card-elevated {
+    @apply bg-dark-surface-elevated;
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.4),
+      0 20px 40px -10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Modern inputs - Light mode */
   .input {
     @apply w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl;
     @apply focus:outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10;
     @apply transition-all duration-200;
+  }
+
+  /* Modern inputs - Dark mode */
+  .dark .input {
+    @apply bg-dark-surface border-dark-border text-slate-100;
+    @apply focus:bg-dark-surface-elevated focus:border-indigo-400 focus:ring-indigo-400/20;
   }
 
   /* Gradient text */
@@ -121,6 +159,10 @@
   .stat-card {
     @apply relative overflow-hidden rounded-2xl p-4 text-white;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .stat-card {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
   }
 
   .stat-card::before {
@@ -194,7 +236,7 @@
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Light mode */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -211,6 +253,15 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Custom scrollbar - Dark mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: #3d3d4d;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4d4d5d;
 }
 
 /* Safe area for mobile */

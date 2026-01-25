@@ -16,6 +16,7 @@ export default function ProgrammeDetailPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showCompleteWeek, setShowCompleteWeek] = useState(false)
   const [showEndProgramme, setShowEndProgramme] = useState(false)
+  const [editingExercise, setEditingExercise] = useState(null)
 
   const templates = useLiveQuery(
     () => (programme ? getWorkoutTemplates(programme.id) : []),
@@ -112,6 +113,11 @@ export default function ProgrammeDetailPage() {
     ex.name.toLowerCase().includes(searchQuery.toLowerCase())
   ) || []
 
+  const handleUpdateExercise = async (templateExerciseId, updates) => {
+    await db.templateExercises.update(templateExerciseId, updates)
+    setEditingExercise(null)
+  }
+
   const isComplete = programme && programme.currentWeek > programme.durationWeeks
 
   if (!programme) {
@@ -149,18 +155,18 @@ export default function ProgrammeDetailPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100">
                     {isComplete ? 'Programme Complete!' : `Week ${programme.currentWeek || 1} of ${programme.durationWeeks}`}
                   </h3>
                   {!isComplete && (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       {programme.daysPerWeek} training days
                     </p>
                   )}
                 </div>
               </div>
             </div>
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+            <div className="h-2 bg-slate-100 dark:bg-dark-border rounded-full overflow-hidden mb-4">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   isComplete
@@ -202,16 +208,17 @@ export default function ProgrammeDetailPage() {
                   setShowExercisePicker(true)
                 }}
                 onStartWorkout={() => handleStartWorkout(template)}
+                onEditExercise={(exercise) => setEditingExercise(exercise)}
               />
             ))
           ) : (
             <Card className="text-center py-8">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-dark-border flex items-center justify-center mx-auto mb-3">
                 <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </div>
-              <p className="text-slate-600 font-medium">No workout days yet</p>
+              <p className="text-slate-600 dark:text-slate-300 font-medium">No workout days yet</p>
               <p className="text-sm text-slate-400 mt-1">
                 Add {programme.daysPerWeek} training days for your week
               </p>
@@ -223,7 +230,7 @@ export default function ProgrammeDetailPage() {
         {(!templates || templates.length < programme.daysPerWeek) && (
           <button
             onClick={() => setShowAddTemplate(true)}
-            className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50 transition-all duration-300"
+            className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-dark-border rounded-2xl text-slate-500 dark:text-slate-400 font-semibold hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20/50 transition-all duration-300"
           >
             + Add Day {(templates?.length || 0) + 1}
           </button>
@@ -290,10 +297,10 @@ export default function ProgrammeDetailPage() {
               <button
                 key={exercise.id}
                 onClick={() => handleAddExerciseToTemplate(exercise)}
-                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 border border-slate-200 transition-colors"
+                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-surface dark:bg-dark-surface-elevated active:bg-slate-100 dark:bg-dark-border border border-slate-200 dark:border-dark-border transition-colors"
               >
-                <div className="font-medium text-slate-800">{exercise.name}</div>
-                <div className="text-sm text-slate-500">
+                <div className="font-medium text-slate-800 dark:text-slate-100">{exercise.name}</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   {exercise.equipment} • {exercise.muscleGroups.join(', ')}
                 </div>
               </button>
@@ -316,10 +323,10 @@ export default function ProgrammeDetailPage() {
               </svg>
             </div>
           </div>
-          <p className="text-slate-600 text-center">
+          <p className="text-slate-600 dark:text-slate-300 text-center">
             Mark Week {programme.currentWeek} as complete and advance to Week {programme.currentWeek + 1}?
           </p>
-          <p className="text-sm text-slate-500 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
             Your weights and reps will be used for progressive overload suggestions.
           </p>
           <div className="flex gap-3">
@@ -355,10 +362,10 @@ export default function ProgrammeDetailPage() {
               </svg>
             </div>
           </div>
-          <p className="text-slate-600 text-center">
+          <p className="text-slate-600 dark:text-slate-300 text-center">
             Are you sure you want to end this programme early?
           </p>
-          <p className="text-sm text-slate-500 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
             Week {programme.currentWeek} of {programme.durationWeeks}. Your workout history will be saved.
           </p>
           <div className="flex gap-3">
@@ -379,13 +386,21 @@ export default function ProgrammeDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Edit Exercise Modal - rendered at root level for proper scrolling */}
+      {editingExercise && (
+        <EditExerciseModal
+          exercise={editingExercise}
+          onClose={() => setEditingExercise(null)}
+          onSave={(updates) => handleUpdateExercise(editingExercise.id, updates)}
+        />
+      )}
     </>
   )
 }
 
-function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise, onStartWorkout }) {
+function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise, onStartWorkout, onEditExercise }) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [editingExercise, setEditingExercise] = useState(null)
   const currentWeek = programme.currentWeek || 1
 
   // Use live query to auto-refresh when exercises are added/removed
@@ -427,22 +442,17 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
     await db.templateExercises.delete(templateExerciseId)
   }
 
-  const handleUpdateExercise = async (templateExerciseId, updates) => {
-    await db.templateExercises.update(templateExerciseId, updates)
-    setEditingExercise(null)
-  }
-
   return (
     <Card className="p-0 overflow-hidden animate-scale-in">
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-dark-surface dark:bg-dark-surface-elevated/50 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold shadow-lg ${
             isCompleted
               ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/30'
-              : 'bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600'
+              : 'bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 dark:text-indigo-400'
           }`}>
             {isCompleted ? (
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -452,14 +462,14 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-slate-800">{template.name}</h3>
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100">{template.name}</h3>
               {isCompleted && (
-                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-medium">
                   Done
                 </span>
               )}
             </div>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {exercises.length} exercises
               {isCompleted && currentWeekWorkout?.date && (
                 <span> • {new Date(currentWeekWorkout.date).toLocaleDateString()}</span>
@@ -479,26 +489,26 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
       </div>
 
       {isExpanded && (
-        <div className="border-t border-slate-100">
+        <div className="border-t border-slate-100 dark:border-dark-border">
           {/* Show completed workout sets if done */}
           {isCompleted && completedWorkoutData?.setsByExercise && (
-            <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border-b border-emerald-100">
-              <h4 className="text-sm font-semibold text-emerald-800 mb-3">Completed Sets</h4>
+            <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-b border-emerald-100 dark:border-emerald-800">
+              <h4 className="text-sm font-semibold text-emerald-800 dark:text-emerald-300 mb-3">Completed Sets</h4>
               <div className="space-y-3">
                 {exercises.map((item) => {
                   const setsForExercise = completedWorkoutData.setsByExercise[item.exerciseId] || []
                   const workingSets = setsForExercise.filter(s => !s.isWarmup)
                   return (
-                    <div key={item.id} className="bg-white/80 rounded-xl p-3">
-                      <div className="font-medium text-slate-800 mb-2">
+                    <div key={item.id} className="bg-white/80 dark:bg-dark-surface/80 rounded-xl p-3">
+                      <div className="font-medium text-slate-800 dark:text-slate-100 mb-2">
                         {item.exercise?.name}
                       </div>
                       {workingSets.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {workingSets.map((set, idx) => (
-                            <span key={idx} className="text-sm bg-slate-100 px-2.5 py-1 rounded-lg font-medium">
+                            <span key={idx} className="text-sm bg-slate-100 dark:bg-dark-border px-2.5 py-1 rounded-lg font-medium">
                               {set.weight}kg × {set.reps}
-                              {set.rpe && <span className="text-slate-500 font-normal"> @{set.rpe}</span>}
+                              {set.rpe && <span className="text-slate-500 dark:text-slate-400 font-normal"> @{set.rpe}</span>}
                             </span>
                           ))}
                         </div>
@@ -518,22 +528,22 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
               {exercises.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between py-2.5 px-3 bg-slate-50 rounded-xl transition-colors hover:bg-slate-100"
+                  className="flex items-center justify-between py-2.5 px-3 bg-slate-50 dark:bg-dark-surface-elevated rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-dark-border dark:bg-dark-border"
                 >
                   <div
                     className="flex-1 cursor-pointer"
-                    onClick={() => setEditingExercise(item)}
+                    onClick={() => onEditExercise(item)}
                   >
-                    <div className="font-medium text-slate-800">
+                    <div className="font-medium text-slate-800 dark:text-slate-100">
                       {item.exercise?.name || 'Unknown Exercise'}
                     </div>
-                    <div className="text-sm text-slate-500">
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
                       {item.targetSets} sets × {item.minReps || 8}-{item.maxReps || 12} reps
                     </div>
                   </div>
                   <button
                     onClick={() => handleRemoveExercise(item.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -550,11 +560,11 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
             </div>
           )}
 
-          <div className="flex border-t border-slate-100">
+          <div className="flex border-t border-slate-100 dark:border-dark-border">
             {!isCompleted && (
               <button
                 onClick={onAddExercise}
-                className="flex-1 py-3 text-sm font-semibold text-indigo-500 hover:bg-indigo-50 transition-colors"
+                className="flex-1 py-3 text-sm font-semibold text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
               >
                 Add Exercise
               </button>
@@ -562,10 +572,10 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
             {exercises.length > 0 && programme.isActive === 1 && (
               <button
                 onClick={onStartWorkout}
-                className={`flex-1 py-3 text-sm font-semibold border-l border-slate-100 transition-colors ${
+                className={`flex-1 py-3 text-sm font-semibold border-l border-slate-100 dark:border-dark-border transition-colors ${
                   isCompleted
-                    ? 'text-slate-400 hover:bg-slate-50'
-                    : 'text-emerald-500 hover:bg-emerald-50'
+                    ? 'text-slate-400 hover:bg-slate-50 dark:hover:bg-dark-surface dark:bg-dark-surface-elevated'
+                    : 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
                 }`}
               >
                 {isCompleted ? 'Redo Workout' : 'Start Workout'}
@@ -574,21 +584,13 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
             {!isCompleted && (
               <button
                 onClick={onDelete}
-                className="flex-1 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 border-l border-slate-100 transition-colors"
+                className="flex-1 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border-l border-slate-100 dark:border-dark-border transition-colors"
               >
                 Delete
               </button>
             )}
           </div>
 
-          {/* Edit Exercise Modal */}
-          {editingExercise && (
-            <EditExerciseModal
-              exercise={editingExercise}
-              onClose={() => setEditingExercise(null)}
-              onSave={(updates) => handleUpdateExercise(editingExercise.id, updates)}
-            />
-          )}
         </div>
       )}
     </Card>
@@ -603,25 +605,25 @@ function EditExerciseModal({ exercise, onClose, onSave }) {
   return (
     <Modal isOpen={true} onClose={onClose} title="Edit Exercise">
       <div className="space-y-5">
-        <div className="font-semibold text-slate-800 text-lg">
+        <div className="font-semibold text-slate-800 dark:text-slate-100 text-lg">
           {exercise.exercise?.name}
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-600 block mb-3">
+          <label className="text-sm font-semibold text-slate-600 dark:text-slate-300 block mb-3">
             Target Sets
           </label>
           <div className="flex items-center gap-4 justify-center">
             <button
               onClick={() => setTargetSets(Math.max(1, targetSets - 1))}
-              className="w-14 h-14 rounded-xl bg-slate-100 text-xl font-bold text-slate-600 hover:bg-slate-200 active:scale-95 transition-all"
+              className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-dark-border text-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 active:scale-95 transition-all"
             >
               -
             </button>
-            <span className="text-3xl font-bold w-14 text-center text-slate-800">{targetSets}</span>
+            <span className="text-3xl font-bold w-14 text-center text-slate-800 dark:text-slate-100">{targetSets}</span>
             <button
               onClick={() => setTargetSets(targetSets + 1)}
-              className="w-14 h-14 rounded-xl bg-slate-100 text-xl font-bold text-slate-600 hover:bg-slate-200 active:scale-95 transition-all"
+              className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-dark-border text-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 active:scale-95 transition-all"
             >
               +
             </button>
@@ -629,7 +631,7 @@ function EditExerciseModal({ exercise, onClose, onSave }) {
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-slate-600 block mb-3">
+          <label className="text-sm font-semibold text-slate-600 dark:text-slate-300 block mb-3">
             Rep Range
           </label>
           <div className="flex items-center gap-3 justify-center">
@@ -637,7 +639,7 @@ function EditExerciseModal({ exercise, onClose, onSave }) {
               type="number"
               value={minReps}
               onChange={(e) => setMinReps(parseInt(e.target.value) || 1)}
-              className="w-20 px-3 py-3 border-2 border-slate-200 rounded-xl text-center text-lg font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+              className="w-20 px-3 py-3 border-2 border-slate-200 dark:border-dark-border rounded-xl text-center text-lg font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
               min="1"
             />
             <span className="text-slate-400 font-medium">to</span>
@@ -645,10 +647,10 @@ function EditExerciseModal({ exercise, onClose, onSave }) {
               type="number"
               value={maxReps}
               onChange={(e) => setMaxReps(parseInt(e.target.value) || 1)}
-              className="w-20 px-3 py-3 border-2 border-slate-200 rounded-xl text-center text-lg font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+              className="w-20 px-3 py-3 border-2 border-slate-200 dark:border-dark-border rounded-xl text-center text-lg font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
               min="1"
             />
-            <span className="text-slate-500 font-medium">reps</span>
+            <span className="text-slate-500 dark:text-slate-400 font-medium">reps</span>
           </div>
         </div>
 

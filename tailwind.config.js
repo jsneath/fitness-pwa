@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -19,6 +20,21 @@ export default {
           800: '#1e40af',
           900: '#1e3a8a',
         },
+        // Dark mode color palette
+        dark: {
+          bg: '#0f0f14',
+          surface: '#1a1a24',
+          'surface-elevated': '#242432',
+          border: '#2d2d3d',
+          'border-subtle': '#3d3d4d',
+        },
+        // Accent colors for both modes
+        accent: {
+          success: '#10b981',
+          'success-dark': '#059669',
+          danger: '#ef4444',
+          'danger-dark': '#dc2626',
+        }
       },
     },
   },

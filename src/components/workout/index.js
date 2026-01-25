@@ -1,3 +1,5 @@
 export { default as RestTimer } from './RestTimer'
 export { default as SetInput } from './SetInput'
 export { default as ExerciseCard } from './ExerciseCard'
+export { default as EmojiSlider } from './EmojiSlider'
+export { default as PRCelebration, usePRDetection } from './PRCelebration'

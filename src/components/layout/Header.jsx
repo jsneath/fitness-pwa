@@ -15,10 +15,10 @@ function Logo() {
       </div>
       {/* Logo text */}
       <div className="flex flex-col -space-y-1">
-        <span className="text-base font-black tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <span className="text-base font-black tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
           JEFIT
         </span>
-        <span className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase">
+        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-widest uppercase">
           Tracker
         </span>
       </div>
@@ -32,7 +32,7 @@ export default function Header({ title, showBack = false, rightAction = null, sh
   // If showing logo (home page), center it
   if (showLogo) {
     return (
-      <header className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 safe-area-top z-50">
+      <header className="fixed top-0 left-0 right-0 bg-white/70 dark:bg-dark-surface/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-dark-border/50 safe-area-top z-50 transition-colors duration-300">
         <div className="flex items-center justify-center h-16 px-4 max-w-lg mx-auto">
           <Logo />
         </div>
@@ -41,16 +41,16 @@ export default function Header({ title, showBack = false, rightAction = null, sh
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 safe-area-top z-50">
+    <header className="fixed top-0 left-0 right-0 bg-white/70 dark:bg-dark-surface/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-dark-border/50 safe-area-top z-50 transition-colors duration-300">
       <div className="flex items-center h-16 px-4 max-w-lg mx-auto">
         {/* Left side - back button or spacer */}
         <div className="w-10">
           {showBack && (
             <button
               onClick={() => navigate(-1)}
-              className="p-2 -ml-2 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors duration-200"
+              className="p-2 -ml-2 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-surface-elevated active:bg-slate-200 dark:active:bg-dark-border transition-colors duration-200"
             >
-              <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="w-6 h-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
             </button>
@@ -59,7 +59,7 @@ export default function Header({ title, showBack = false, rightAction = null, sh
 
         {/* Center - title */}
         <div className="flex-1 flex justify-center">
-          <h1 className="text-lg font-bold text-slate-800">{title}</h1>
+          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h1>
         </div>
 
         {/* Right side - action or spacer */}

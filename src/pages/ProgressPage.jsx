@@ -1,8 +1,18 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
+import {
+  InteractiveChart,
+  BadgeCard,
+  BADGES,
+  checkBadgeProgress,
+  StreakCalendar,
+  MuscleMap,
+  InsightCard,
+  generateInsights
+} from '../components/progress'
 import { db, getWorkoutLogs, getBodyMetrics, addBodyMetric, getAllExercises } from '../db/database'
 
 export default function ProgressPage() {
@@ -14,8 +24,112 @@ export default function ProgressPage() {
   const workoutLogs = useLiveQuery(() => getWorkoutLogs(100), [])
   const bodyMetrics = useLiveQuery(() => getBodyMetrics(50), [])
   const exercises = useLiveQuery(() => getAllExercises(), [])
+  const setLogs = useLiveQuery(() => db.setLogs.toArray(), [])
+  const personalRecords = useLiveQuery(() => db.personalRecords.toArray(), [])
 
-  // Calculate workout frequency data
+  // Workout dates for streak calendar
+  const workoutDates = useMemo(() => {
+    if (!workoutLogs) return []
+    return workoutLogs.map(w => w.date)
+  }, [workoutLogs])
+
+  // Calculate current streak
+  const currentStreak = useMemo(() => {
+    if (!workoutLogs || workoutLogs.length === 0) return 0
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayStr = today.toISOString().split('T')[0]
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+    const workoutSet = new Set(workoutLogs.map(w => w.date))
+    let streak = 0
+    let checkDate = new Date(workoutSet.has(todayStr) ? today : yesterday)
+
+    if (!workoutSet.has(todayStr) && !workoutSet.has(yesterdayStr)) {
+      return 0
+    }
+
+    while (true) {
+      const dateStr = checkDate.toISOString().split('T')[0]
+      if (workoutSet.has(dateStr)) {
+        streak++
+        checkDate.setDate(checkDate.getDate() - 1)
+      } else {
+        break
+      }
+    }
+
+    return streak
+  }, [workoutLogs])
+
+  // Calculate muscle group activity
+  const muscleData = useMemo(() => {
+    if (!setLogs || !exercises) return {}
+
+    const last30Days = new Date()
+    last30Days.setDate(last30Days.getDate() - 30)
+
+    const muscleCount = {}
+
+    setLogs.forEach(set => {
+      const exercise = exercises.find(e => e.id === set.exerciseId)
+      if (exercise?.muscleGroups) {
+        exercise.muscleGroups.forEach(muscle => {
+          const normalizedMuscle = muscle.toLowerCase()
+          muscleCount[normalizedMuscle] = (muscleCount[normalizedMuscle] || 0) + 1
+        })
+      }
+    })
+
+    return muscleCount
+  }, [setLogs, exercises])
+
+  // Calculate stats for badges and insights
+  const stats = useMemo(() => {
+    if (!workoutLogs) return {
+      totalWorkouts: 0,
+      currentStreak,
+      totalPRs: personalRecords?.length || 0,
+      totalVolume: 0,
+      thisWeek: 0,
+      thisMonth: 0
+    }
+
+    const now = new Date()
+    const weekAgo = new Date(now)
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const monthAgo = new Date(now)
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+
+    const totalVolume = setLogs?.reduce((sum, set) =>
+      sum + ((set.weight || 0) * (set.reps || 0)), 0) || 0
+
+    return {
+      totalWorkouts: workoutLogs.length,
+      currentStreak,
+      totalPRs: personalRecords?.length || 0,
+      totalVolume,
+      thisWeek: workoutLogs.filter(w => new Date(w.date) >= weekAgo).length,
+      thisMonth: workoutLogs.filter(w => new Date(w.date) >= monthAgo).length,
+      recentPRs: personalRecords?.filter(p =>
+        new Date(p.date) >= weekAgo
+      ).length || 0,
+      missedDays: (() => {
+        if (workoutLogs.length === 0) return 0
+        const lastWorkout = new Date(workoutLogs[0]?.date)
+        const daysSince = Math.floor((now - lastWorkout) / (1000 * 60 * 60 * 24))
+        return daysSince
+      })()
+    }
+  }, [workoutLogs, setLogs, personalRecords, currentStreak])
+
+  // Generate insights
+  const insights = useMemo(() => generateInsights(stats), [stats])
+
+  // Workout frequency data for chart
   const workoutFrequencyData = useMemo(() => {
     if (!workoutLogs) return []
 
@@ -26,62 +140,28 @@ export default function ProgressPage() {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
       const dateStr = date.toISOString().split('T')[0]
-      const count = workoutLogs.filter((w) => w.date === dateStr).length
+      const count = workoutLogs.filter(w => w.date === dateStr).length
       last30Days.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        workouts: count
+        value: count
       })
     }
 
     return last30Days
   }, [workoutLogs])
 
-  // Calculate weekly volume
-  const weeklyVolume = useMemo(() => {
-    if (!workoutLogs) return []
-
-    const weeks = {}
-    workoutLogs.forEach((workout) => {
-      const date = new Date(workout.date)
-      const weekStart = new Date(date)
-      weekStart.setDate(date.getDate() - date.getDay())
-      const weekKey = weekStart.toISOString().split('T')[0]
-
-      if (!weeks[weekKey]) {
-        weeks[weekKey] = { week: weekKey, volume: 0 }
-      }
-    })
-
-    return Object.values(weeks)
-      .sort((a, b) => new Date(a.week) - new Date(b.week))
-      .slice(-8)
-      .map((w) => ({
-        ...w,
-        week: new Date(w.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      }))
-  }, [workoutLogs])
-
-  // Body weight data
+  // Body weight data for chart
   const bodyWeightData = useMemo(() => {
     if (!bodyMetrics) return []
 
     return bodyMetrics
       .slice()
       .reverse()
-      .map((m) => ({
+      .map(m => ({
         date: new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        weight: m.weight,
-        bodyFat: m.bodyFat
+        value: m.weight
       }))
   }, [bodyMetrics])
-
-  // Exercise progress data
-  const exerciseProgressData = useMemo(() => {
-    if (!selectedExercise) return []
-
-    // This would need actual set log data - simplified for now
-    return []
-  }, [selectedExercise])
 
   const handleAddMetric = async () => {
     const weight = parseFloat(newMetric.weight)
@@ -100,26 +180,10 @@ export default function ProgressPage() {
     setShowAddMetric(false)
   }
 
-  const stats = useMemo(() => {
-    if (!workoutLogs) return { total: 0, thisWeek: 0, thisMonth: 0 }
-
-    const now = new Date()
-    const weekAgo = new Date(now)
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    const monthAgo = new Date(now)
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
-
-    return {
-      total: workoutLogs.length,
-      thisWeek: workoutLogs.filter((w) => new Date(w.date) >= weekAgo).length,
-      thisMonth: workoutLogs.filter((w) => new Date(w.date) >= monthAgo).length
-    }
-  }, [workoutLogs])
-
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'body', label: 'Body' },
-    { id: 'exercises', label: 'Exercises' }
+    { id: 'badges', label: 'Badges' }
   ]
 
   return (
@@ -128,15 +192,15 @@ export default function ProgressPage() {
 
       <div className="space-y-4 pt-4">
         {/* Tabs */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-          {tabs.map((tab) => (
+        <div className="flex gap-1 bg-slate-100 dark:bg-dark-surface p-1 rounded-xl">
+          {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600'
+                  ? 'bg-white dark:bg-dark-surface-elevated text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {tab.label}
@@ -144,167 +208,168 @@ export default function ProgressPage() {
           ))}
         </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="space-y-4">
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="text-center py-3">
-                <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-                <div className="text-xs text-gray-500">Total</div>
-              </Card>
-              <Card className="text-center py-3">
-                <div className="text-2xl font-bold text-blue-600">{stats.thisWeek}</div>
-                <div className="text-xs text-gray-500">This Week</div>
-              </Card>
-              <Card className="text-center py-3">
-                <div className="text-2xl font-bold text-green-600">{stats.thisMonth}</div>
-                <div className="text-xs text-gray-500">This Month</div>
-              </Card>
-            </div>
-
-            {/* Workout Frequency Chart */}
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-4">Workout Frequency (30 days)</h3>
-              {workoutFrequencyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={workoutFrequencyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 10 }}
-                      interval={6}
-                    />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-                    <Tooltip />
-                    <Bar dataKey="workouts" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No workout data yet
-                </div>
-              )}
-            </Card>
-          </div>
-        )}
-
-        {/* Body Tab */}
-        {activeTab === 'body' && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900">Body Metrics</h3>
-              <Button size="sm" onClick={() => setShowAddMetric(true)}>
-                Log Weight
-              </Button>
-            </div>
-
-            {/* Latest Metrics */}
-            {bodyMetrics && bodyMetrics.length > 0 && (
-              <div className="grid grid-cols-2 gap-3">
+        <AnimatePresence mode="wait">
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-4"
+            >
+              {/* Quick Stats */}
+              <div className="grid grid-cols-3 gap-3">
                 <Card className="text-center py-3">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {bodyMetrics[0].weight} kg
-                  </div>
-                  <div className="text-xs text-gray-500">Current Weight</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalWorkouts}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Total</div>
                 </Card>
-                {bodyMetrics[0].bodyFat && (
-                  <Card className="text-center py-3">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {bodyMetrics[0].bodyFat}%
-                    </div>
-                    <div className="text-xs text-gray-500">Body Fat</div>
-                  </Card>
-                )}
+                <Card className="text-center py-3">
+                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.thisWeek}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">This Week</div>
+                </Card>
+                <Card className="text-center py-3">
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{currentStreak}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Streak</div>
+                </Card>
               </div>
-            )}
 
-            {/* Weight Chart */}
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-4">Weight History</h3>
-              {bodyWeightData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={bodyWeightData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                    <YAxis
-                      domain={['dataMin - 2', 'dataMax + 2']}
-                      tick={{ fontSize: 10 }}
-                    />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="weight"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      dot={{ fill: '#3b82f6' }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No weight data yet. Log your first weigh-in!
-                </div>
-              )}
-            </Card>
-
-            {/* Metrics History */}
-            {bodyMetrics && bodyMetrics.length > 0 && (
-              <Card>
-                <h3 className="font-semibold text-gray-900 mb-3">Recent Entries</h3>
-                <div className="space-y-2">
-                  {bodyMetrics.slice(0, 10).map((metric) => (
-                    <div
-                      key={metric.id}
-                      className="flex justify-between py-2 border-b border-gray-100 last:border-0"
-                    >
-                      <span className="text-gray-500">
-                        {new Date(metric.date).toLocaleDateString()}
-                      </span>
-                      <span className="font-medium">
-                        {metric.weight} kg
-                        {metric.bodyFat && ` • ${metric.bodyFat}%`}
-                      </span>
-                    </div>
+              {/* Insights */}
+              {insights.length > 0 && (
+                <div className="space-y-3">
+                  {insights.slice(0, 3).map((insight, index) => (
+                    <InsightCard key={index} {...insight} />
                   ))}
                 </div>
-              </Card>
-            )}
-          </div>
-        )}
+              )}
 
-        {/* Exercises Tab */}
-        {activeTab === 'exercises' && (
-          <div className="space-y-4">
-            <Card>
-              <h3 className="font-semibold text-gray-900 mb-3">Exercise Progress</h3>
-              <p className="text-gray-500 text-sm">
-                Select an exercise to view your progress over time.
-              </p>
-              <select
-                value={selectedExercise?.id || ''}
-                onChange={(e) => {
-                  const ex = exercises?.find((x) => x.id === parseInt(e.target.value))
-                  setSelectedExercise(ex || null)
-                }}
-                className="w-full mt-3 px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Select an exercise...</option>
-                {exercises?.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.name}
-                  </option>
-                ))}
-              </select>
-            </Card>
+              {/* Streak Calendar */}
+              <StreakCalendar workoutDates={workoutDates} weeks={12} />
 
-            {selectedExercise && (
-              <Card className="text-center py-8 text-gray-500">
-                Exercise progress tracking coming soon!
-              </Card>
-            )}
-          </div>
-        )}
+              {/* Workout Frequency Chart */}
+              <InteractiveChart
+                data={workoutFrequencyData}
+                dataKey="value"
+                xAxisKey="date"
+                title="Workout Frequency"
+                subtitle="Last 30 days"
+                color="#6366f1"
+                unit=" workouts"
+              />
+
+              {/* Muscle Map */}
+              <MuscleMap muscleData={muscleData} view="front" />
+            </motion.div>
+          )}
+
+          {/* Body Tab */}
+          {activeTab === 'body' && (
+            <motion.div
+              key="body"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-4"
+            >
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-slate-900 dark:text-white">Body Metrics</h3>
+                <Button size="sm" onClick={() => setShowAddMetric(true)}>
+                  Log Weight
+                </Button>
+              </div>
+
+              {/* Latest Metrics */}
+              {bodyMetrics && bodyMetrics.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Card className="text-center py-4">
+                    <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {bodyMetrics[0].weight}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">kg</div>
+                  </Card>
+                  {bodyMetrics[0].bodyFat && (
+                    <Card className="text-center py-4">
+                      <div className="text-3xl font-bold text-slate-900 dark:text-white">
+                        {bodyMetrics[0].bodyFat}
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">% body fat</div>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Weight Chart */}
+              <InteractiveChart
+                data={bodyWeightData}
+                dataKey="value"
+                xAxisKey="date"
+                title="Weight History"
+                subtitle="Track your progress"
+                color="#10b981"
+                unit="kg"
+                showBrush={bodyWeightData.length > 15}
+              />
+
+              {/* Metrics History */}
+              {bodyMetrics && bodyMetrics.length > 0 && (
+                <Card>
+                  <h3 className="font-semibold text-slate-900 dark:text-white mb-3">Recent Entries</h3>
+                  <div className="space-y-2">
+                    {bodyMetrics.slice(0, 10).map(metric => (
+                      <div
+                        key={metric.id}
+                        className="flex justify-between py-2 border-b border-slate-100 dark:border-dark-border last:border-0"
+                      >
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {new Date(metric.date).toLocaleDateString()}
+                        </span>
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {metric.weight} kg
+                          {metric.bodyFat && ` • ${metric.bodyFat}%`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </motion.div>
+          )}
+
+          {/* Badges Tab */}
+          {activeTab === 'badges' && (
+            <motion.div
+              key="badges"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-4"
+            >
+              <div className="text-center mb-6">
+                <span className="text-4xl">🏆</span>
+                <h3 className="font-semibold text-slate-900 dark:text-white mt-2">Your Achievements</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Keep training to unlock more badges!
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {Object.values(BADGES).map(badge => {
+                  const progress = checkBadgeProgress(badge, stats)
+                  const earned = progress >= badge.requirement
+
+                  return (
+                    <BadgeCard
+                      key={badge.id}
+                      badge={badge}
+                      earned={earned}
+                      progress={progress}
+                    />
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Add Metric Modal */}
@@ -322,7 +387,7 @@ export default function ProgressPage() {
             type="number"
             step="0.1"
             value={newMetric.weight}
-            onChange={(e) => setNewMetric({ ...newMetric, weight: e.target.value })}
+            onChange={e => setNewMetric({ ...newMetric, weight: e.target.value })}
             placeholder="e.g., 75.5"
           />
           <Input
@@ -330,7 +395,7 @@ export default function ProgressPage() {
             type="number"
             step="0.1"
             value={newMetric.bodyFat}
-            onChange={(e) => setNewMetric({ ...newMetric, bodyFat: e.target.value })}
+            onChange={e => setNewMetric({ ...newMetric, bodyFat: e.target.value })}
             placeholder="e.g., 15"
           />
           <Button

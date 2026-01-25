@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { db, addWorkoutLog, addSetLog, getSetting } from '../db/database'
+import { db, addWorkoutLog, addSetLog, getSetting, addExerciseFeedback } from '../db/database'
 
 const WorkoutContext = createContext(null)
 
@@ -134,8 +134,12 @@ export function WorkoutProvider({ children }) {
 
     const workoutLogId = await addWorkoutLog(workoutLog)
 
-    // Save all sets
+    // Save all sets and collect feedback for each exercise
     for (const exercise of exercises) {
+      let exercisePumpRating = null
+      let exerciseSorenessRating = null
+      let exerciseFatigueRating = null
+
       for (let i = 0; i < exercise.sets.length; i++) {
         const set = exercise.sets[i]
         await addSetLog({
@@ -145,8 +149,29 @@ export function WorkoutProvider({ children }) {
           weight: set.weight,
           reps: set.reps,
           rpe: set.rpe || null,
+          rir: set.rir !== undefined ? set.rir : null,
+          e1rm: set.e1rm || null,
           isWarmup: set.isWarmup || false,
-          timestamp: set.timestamp
+          timestamp: set.timestamp,
+          pumpRating: set.pumpRating || null,
+          sorenessRating: set.sorenessRating || null,
+          fatigueRating: set.fatigueRating || null
+        })
+
+        // Collect feedback from sets (use the last non-null value for exercise-level feedback)
+        if (set.pumpRating) exercisePumpRating = set.pumpRating
+        if (set.sorenessRating) exerciseSorenessRating = set.sorenessRating
+        if (set.fatigueRating) exerciseFatigueRating = set.fatigueRating
+      }
+
+      // Save exercise-level feedback if any was provided
+      if (exercisePumpRating || exerciseSorenessRating || exerciseFatigueRating) {
+        await addExerciseFeedback({
+          workoutLogId,
+          exerciseId: exercise.id,
+          pumpRating: exercisePumpRating,
+          sorenessRating: exerciseSorenessRating,
+          fatigueRating: exerciseFatigueRating
         })
       }
     }

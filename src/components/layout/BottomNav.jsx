@@ -1,4 +1,13 @@
 import { NavLink } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import useScrollPosition from '../../hooks/useScrollPosition'
+
+// Haptic feedback helper
+const triggerHaptic = () => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(10)
+  }
+}
 
 const navItems = [
   {
@@ -50,18 +59,39 @@ const navItems = [
 ]
 
 export default function BottomNav() {
+  const { isScrollingDown, isAtTop, prefersReducedMotion } = useScrollPosition({ threshold: 15 })
+
+  // Hide nav when scrolling down, show when scrolling up or at top
+  const shouldHide = isScrollingDown && !isAtTop
+
+  const handleNavClick = () => {
+    triggerHaptic()
+  }
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 safe-area-bottom z-50">
+    <motion.nav
+      initial={{ y: 0 }}
+      animate={{
+        y: prefersReducedMotion ? 0 : (shouldHide ? 100 : 0)
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 30
+      }}
+      className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-dark-surface/90 backdrop-blur-xl border-t border-slate-200/60 dark:border-dark-border/60 safe-area-bottom z-50 transition-colors duration-300"
+    >
       <div className="flex justify-around items-center h-[72px] max-w-lg mx-auto px-2">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={handleNavClick}
             className={({ isActive }) =>
               `relative flex flex-col items-center justify-center w-16 py-2 rounded-2xl transition-all duration-300 ${
                 isActive
                   ? 'text-transparent'
-                  : 'text-slate-400 hover:text-slate-600 active:scale-95'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 active:scale-95'
               }`
             }
           >
@@ -69,26 +99,33 @@ export default function BottomNav() {
               <>
                 {/* Active gradient background */}
                 {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-10" />
+                  <motion.div
+                    layoutId="nav-active-bg"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl opacity-10 dark:opacity-20"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
                 )}
 
                 {/* Icon with gradient when active */}
-                <div className={`relative transition-transform duration-300 ${isActive ? 'scale-110 -translate-y-0.5' : ''}`}>
+                <motion.div
+                  className={`relative transition-transform duration-300 ${isActive ? 'scale-110 -translate-y-0.5' : ''}`}
+                  whileTap={{ scale: 0.9 }}
+                >
                   {isActive ? (
                     <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text">
-                      <div className="text-indigo-600">
+                      <div className="text-indigo-600 dark:text-indigo-400">
                         {item.icon(true)}
                       </div>
                     </div>
                   ) : (
                     item.icon(false)
                   )}
-                </div>
+                </motion.div>
 
                 {/* Label */}
                 <span className={`text-[10px] mt-1 font-semibold transition-colors ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent'
+                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent'
                     : ''
                 }`}>
                   {item.label}
@@ -96,13 +133,17 @@ export default function BottomNav() {
 
                 {/* Active indicator dot */}
                 {isActive && (
-                  <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+                  <motion.div
+                    layoutId="nav-active-dot"
+                    className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
                 )}
               </>
             )}
           </NavLink>
         ))}
       </div>
-    </nav>
+    </motion.nav>
   )
 }

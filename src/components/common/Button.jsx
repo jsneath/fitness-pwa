@@ -1,9 +1,9 @@
 const variants = {
   primary: 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 hover:-translate-y-0.5',
-  secondary: 'bg-white text-slate-700 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm',
+  secondary: 'bg-white dark:bg-dark-surface text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-dark-border hover:border-slate-300 dark:hover:border-dark-border-subtle hover:bg-slate-50 dark:hover:bg-dark-surface-elevated shadow-sm',
   success: 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-0.5',
   danger: 'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-0.5',
-  ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+  ghost: 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-surface hover:text-slate-900 dark:hover:text-white',
 }
 
 const sizes = {
