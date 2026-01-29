@@ -325,6 +325,27 @@ export async function getAllExercises() {
   return db.exercises.toArray()
 }
 
+export async function addCustomExercise(exercise) {
+  // Check if exercise with same name already exists
+  const existing = await db.exercises.where('name').equalsIgnoreCase(exercise.name).first()
+  if (existing) {
+    throw new Error('An exercise with this name already exists')
+  }
+
+  return db.exercises.add({
+    ...exercise,
+    isCustom: true
+  })
+}
+
+export async function deleteCustomExercise(exerciseId) {
+  const exercise = await db.exercises.get(exerciseId)
+  if (!exercise || !exercise.isCustom) {
+    throw new Error('Can only delete custom exercises')
+  }
+  return db.exercises.delete(exerciseId)
+}
+
 export async function searchExercises(query) {
   const lowerQuery = query.toLowerCase()
   return db.exercises

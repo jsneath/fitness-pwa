@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { Header } from '../components/layout'
-import { Card, Button } from '../components/common'
-import { db, getSetting, setSetting, exportAllData, importAllData } from '../db/database'
+import { Card, Button, Modal, Input } from '../components/common'
+import { db, getSetting, setSetting, exportAllData, importAllData, addCustomExercise, deleteCustomExercise } from '../db/database'
 import { useTheme } from '../context/ThemeContext'
+import { muscleGroups, equipmentTypes } from '../data/defaultExercises'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
@@ -13,6 +15,19 @@ export default function SettingsPage() {
   const [autoStartRestTimer, setAutoStartRestTimer] = useState(true)
   const [importStatus, setImportStatus] = useState(null)
   const fileInputRef = useRef(null)
+
+  // Custom exercise state
+  const [showAddExercise, setShowAddExercise] = useState(false)
+  const [newExerciseName, setNewExerciseName] = useState('')
+  const [newExerciseEquipment, setNewExerciseEquipment] = useState('Barbell')
+  const [newExerciseMuscles, setNewExerciseMuscles] = useState([])
+  const [exerciseError, setExerciseError] = useState('')
+
+  // Get custom exercises
+  const customExercises = useLiveQuery(
+    () => db.exercises.filter(e => e.isCustom === true).toArray(),
+    []
+  )
 
   const handleResetOnboarding = async () => {
     if (confirm('This will reset the onboarding wizard. You will see it again on next app load.')) {
@@ -97,6 +112,50 @@ export default function SettingsPage() {
   }
 
   const restTimerOptions = [30, 60, 90, 120, 180, 240, 300]
+
+  const handleAddExercise = async () => {
+    if (!newExerciseName.trim()) {
+      setExerciseError('Please enter an exercise name')
+      return
+    }
+    if (newExerciseMuscles.length === 0) {
+      setExerciseError('Please select at least one muscle group')
+      return
+    }
+
+    try {
+      await addCustomExercise({
+        name: newExerciseName.trim(),
+        equipment: newExerciseEquipment,
+        muscleGroups: newExerciseMuscles
+      })
+      setShowAddExercise(false)
+      setNewExerciseName('')
+      setNewExerciseEquipment('Barbell')
+      setNewExerciseMuscles([])
+      setExerciseError('')
+    } catch (error) {
+      setExerciseError(error.message)
+    }
+  }
+
+  const handleDeleteExercise = async (exerciseId) => {
+    if (confirm('Delete this custom exercise?')) {
+      try {
+        await deleteCustomExercise(exerciseId)
+      } catch (error) {
+        alert(error.message)
+      }
+    }
+  }
+
+  const toggleMuscle = (muscle) => {
+    setNewExerciseMuscles(prev =>
+      prev.includes(muscle)
+        ? prev.filter(m => m !== muscle)
+        : [...prev, muscle]
+    )
+  }
 
   return (
     <>
@@ -212,6 +271,52 @@ export default function SettingsPage() {
           </div>
         </Card>
 
+        {/* Custom Exercises */}
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">Custom Exercises</h3>
+            <button
+              onClick={() => setShowAddExercise(true)}
+              className="text-sm font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
+            >
+              + Add New
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Create your own exercises if you can't find what you need.
+          </p>
+
+          {customExercises && customExercises.length > 0 ? (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {customExercises.map(exercise => (
+                <div
+                  key={exercise.id}
+                  className="flex items-center justify-between p-3 bg-slate-50 dark:bg-dark-surface-elevated rounded-xl"
+                >
+                  <div>
+                    <p className="font-medium text-slate-800 dark:text-slate-100">{exercise.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {exercise.equipment} - {exercise.muscleGroups.join(', ')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteExercise(exercise.id)}
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
+              No custom exercises yet
+            </p>
+          )}
+        </Card>
+
         {/* Data Management */}
         <Card>
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Data Management</h3>
@@ -291,6 +396,85 @@ export default function SettingsPage() {
           </p>
         </Card>
       </div>
+
+      {/* Add Custom Exercise Modal */}
+      <Modal
+        isOpen={showAddExercise}
+        onClose={() => {
+          setShowAddExercise(false)
+          setNewExerciseName('')
+          setNewExerciseEquipment('Barbell')
+          setNewExerciseMuscles([])
+          setExerciseError('')
+        }}
+        title="Add Custom Exercise"
+      >
+        <div className="space-y-4">
+          {exerciseError && (
+            <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm">
+              {exerciseError}
+            </div>
+          )}
+
+          <Input
+            label="Exercise Name"
+            value={newExerciseName}
+            onChange={(e) => setNewExerciseName(e.target.value)}
+            placeholder="e.g., Cable Incline Fly"
+            autoFocus
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Equipment
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {equipmentTypes.map(equip => (
+                <button
+                  key={equip}
+                  onClick={() => setNewExerciseEquipment(equip)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    newExerciseEquipment === equip
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-slate-100 dark:bg-dark-surface text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {equip}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Muscle Groups (select all that apply)
+            </label>
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+              {muscleGroups.map(muscle => (
+                <button
+                  key={muscle}
+                  onClick={() => toggleMuscle(muscle)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    newExerciseMuscles.includes(muscle)
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-100 dark:bg-dark-surface text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {muscle}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            fullWidth
+            onClick={handleAddExercise}
+            disabled={!newExerciseName.trim() || newExerciseMuscles.length === 0}
+          >
+            Add Exercise
+          </Button>
+        </div>
+      </Modal>
     </>
   )
 }
