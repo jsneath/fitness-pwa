@@ -56,19 +56,17 @@ export default function WorkoutPage() {
 
     const { templateId, programmeId, weekNumber, templateName } = state
 
-    // Start the workout with template info
-    startWorkout(templateId, programmeId, weekNumber)
-
     // Set template info for UI
     setTemplateInfo({ templateId, programmeId, weekNumber, templateName })
     setWorkoutNotes(templateName)
 
-    // Load exercises from template
+    // Load exercises from template FIRST
     const templateExercises = await getTemplateExercises(templateId)
+    const exercisesToAdd = []
     for (const te of templateExercises) {
       const exercise = await getExerciseById(te.exerciseId)
       if (exercise) {
-        addExerciseToWorkout({
+        exercisesToAdd.push({
           ...exercise,
           templateExerciseId: te.id,
           targetSets: te.targetSets,
@@ -77,6 +75,9 @@ export default function WorkoutPage() {
         })
       }
     }
+
+    // Start workout with exercises loaded atomically
+    startWorkout(templateId, programmeId, weekNumber, exercisesToAdd)
 
     // Clear the location state
     navigate('/workout', { replace: true })

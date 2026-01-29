@@ -24,7 +24,7 @@ export function WorkoutProvider({ children }) {
     loadSettings()
   }, [])
 
-  const startWorkout = useCallback((templateId = null, programmeId = null, weekNumber = null) => {
+  const startWorkout = useCallback((templateId = null, programmeId = null, weekNumber = null, initialExercises = []) => {
     const now = new Date()
     setActiveWorkout({
       templateId,
@@ -34,7 +34,8 @@ export function WorkoutProvider({ children }) {
       startTime: now.toISOString(),
       notes: ''
     })
-    setExercises([])
+    // Set initial exercises with empty sets array
+    setExercises(initialExercises.map(ex => ({ ...ex, sets: [] })))
   }, [])
 
   const addExerciseToWorkout = useCallback((exercise) => {
