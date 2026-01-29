@@ -389,10 +389,10 @@ export default function SettingsPage() {
         <Card>
           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">About</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Fitness Tracker PWA v2.0
+            GainForge v2.0
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            A mobile-first workout tracking app that works offline.
+            Forge your gains with smart workout tracking.
           </p>
         </Card>
       </div>

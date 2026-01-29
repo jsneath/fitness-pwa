@@ -1,25 +1,22 @@
 import { useNavigate } from 'react-router-dom'
 
-// Stylish logo component
+// GainForge logo component
 function Logo() {
   return (
     <div className="flex items-center gap-2.5">
-      {/* Logo mark - stylized dumbbell */}
-      <div className="relative w-9 h-9">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl rotate-3 shadow-lg shadow-purple-500/40"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29l-1.43-1.43z"/>
-          </svg>
-        </div>
-      </div>
+      {/* Logo icon */}
+      <img
+        src="/favicon.png"
+        alt="GainForge"
+        className="w-9 h-9 rounded-xl shadow-lg shadow-indigo-500/30"
+      />
       {/* Logo text */}
-      <div className="flex flex-col -space-y-1">
-        <span className="text-base font-black tracking-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-          JEFIT
+      <div className="flex items-baseline">
+        <span className="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+          Gain
         </span>
-        <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 tracking-widest uppercase">
-          Tracker
+        <span className="text-xl font-bold tracking-tight text-purple-500 dark:text-purple-400">
+          Forge
         </span>
       </div>
     </div>

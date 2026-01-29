@@ -7,12 +7,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Fitness Tracker',
-        short_name: 'Fitness',
-        description: 'Track your workouts and progress',
-        theme_color: '#2563eb',
+        name: 'GainForge',
+        short_name: 'GainForge',
+        description: 'Track your workouts and forge your gains',
+        theme_color: '#4f46e5',
         background_color: '#f9fafb',
         display: 'standalone',
         orientation: 'portrait',
@@ -20,17 +20,17 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
