@@ -16,7 +16,7 @@ export default function HomePage() {
     <>
       <Header showLogo />
 
-      <div className="pt-24 space-y-3">
+      <div className="pt-16 space-y-3">
         {/* Quick Actions - Start Workout & Programmes */}
         <BentoGrid>
           <QuickActionsCard />

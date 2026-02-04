@@ -3,15 +3,47 @@ import { db, addWorkoutLog, addSetLog, getSetting, addExerciseFeedback } from '.
 
 const WorkoutContext = createContext(null)
 
+const STORAGE_KEY = 'activeWorkoutState'
+
+// Helper to save workout state to localStorage
+const saveWorkoutState = (activeWorkout, exercises) => {
+  if (activeWorkout) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ activeWorkout, exercises }))
+  } else {
+    localStorage.removeItem(STORAGE_KEY)
+  }
+}
+
+// Helper to load workout state from localStorage
+const loadWorkoutState = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (e) {
+    console.error('Failed to load workout state:', e)
+    localStorage.removeItem(STORAGE_KEY)
+  }
+  return null
+}
+
 export function WorkoutProvider({ children }) {
-  const [activeWorkout, setActiveWorkout] = useState(null)
-  const [exercises, setExercises] = useState([])
+  // Initialize state from localStorage if available
+  const savedState = loadWorkoutState()
+  const [activeWorkout, setActiveWorkout] = useState(savedState?.activeWorkout || null)
+  const [exercises, setExercises] = useState(savedState?.exercises || [])
   const [restTimer, setRestTimer] = useState({
     isRunning: false,
     duration: 90,
     remaining: 0
   })
   const [autoStartTimer, setAutoStartTimer] = useState(true)
+
+  // Auto-save workout state whenever it changes
+  useEffect(() => {
+    saveWorkoutState(activeWorkout, exercises)
+  }, [activeWorkout, exercises])
 
   // Load settings
   useEffect(() => {
