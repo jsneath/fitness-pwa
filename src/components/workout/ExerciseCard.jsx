@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { Card } from '../common'
 import SetInput from './SetInput'
 import { useWorkout } from '../../context/WorkoutContext'
-import { getEnhancedProgressionSuggestion, getDefaultRirTarget, db } from '../../db/database'
+import { getEnhancedProgressionSuggestion, getDefaultRirTarget, getLastSessionSets, db } from '../../db/database'
 
 export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg', templateInfo = null }) {
   const [isExpanded, setIsExpanded] = useState(true)
   const [suggestion, setSuggestion] = useState(null)
   const [targetRir, setTargetRir] = useState(null)
+  const [lastSession, setLastSession] = useState(null)
+  const [showLastSession, setShowLastSession] = useState(false)
   const { addSet, deleteSet, removeExerciseFromWorkout, activeWorkout } = useWorkout()
 
   // Get template info from activeWorkout if not provided via props
@@ -54,6 +56,17 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
     }
     loadSuggestion()
   }, [effectiveTemplateInfo, exercise])
+
+  // Load last session history for this exercise
+  useEffect(() => {
+    const loadLastSession = async () => {
+      if (exercise.id) {
+        const session = await getLastSessionSets(exercise.id)
+        setLastSession(session)
+      }
+    }
+    loadLastSession()
+  }, [exercise.id])
 
   const handleSaveSet = (setData) => {
     addSet(exerciseIndex, setData)
@@ -229,6 +242,46 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Last Session */}
+          {lastSession && lastSession.sets.length > 0 && (
+            <div className="border-t border-slate-100 dark:border-dark-border">
+              <button
+                onClick={() => setShowLastSession(!showLastSession)}
+                className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-dark-surface-elevated transition-colors"
+              >
+                <span className="font-medium uppercase tracking-wider">
+                  Last session — {new Date(lastSession.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${showLastSession ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              {showLastSession && (
+                <div className="px-4 pb-3 space-y-1.5">
+                  {lastSession.sets.filter(s => !s.isWarmup).map((set, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-dark-surface-elevated">
+                      <span className="font-bold text-slate-400 dark:text-slate-500 w-5">{i + 1}</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {set.weight}<span className="text-xs font-normal text-slate-400 ml-0.5">{weightUnit}</span>
+                      </span>
+                      <span className="text-slate-400">×</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">{set.reps} reps</span>
+                      {set.rir !== null && set.rir !== undefined && (
+                        <span className="text-slate-400 dark:text-slate-500 text-xs">@ {set.rir} RIR</span>
+                      )}
+                      {set.e1rm && (
+                        <span className="ml-auto text-xs text-indigo-500 dark:text-indigo-400">{set.e1rm}{weightUnit} e1RM</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

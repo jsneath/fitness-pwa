@@ -400,6 +400,29 @@ export async function getLastSetsForExercise(exerciseId, limit = 10) {
     .toArray()
 }
 
+export async function getLastSessionSets(exerciseId) {
+  const recentSets = await db.setLogs
+    .where('exerciseId')
+    .equals(exerciseId)
+    .reverse()
+    .limit(20)
+    .toArray()
+
+  if (recentSets.length === 0) return null
+
+  const lastWorkoutLogId = recentSets[0].workoutLogId
+  const sessionSets = recentSets
+    .filter(s => s.workoutLogId === lastWorkoutLogId)
+    .sort((a, b) => a.setNumber - b.setNumber)
+
+  const workoutLog = await db.workoutLogs.get(lastWorkoutLogId)
+
+  return {
+    date: workoutLog?.date,
+    sets: sessionSets
+  }
+}
+
 export async function getProgrammes() {
   return db.programmes.toArray()
 }
