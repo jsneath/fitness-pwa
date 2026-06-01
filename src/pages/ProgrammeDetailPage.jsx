@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
 import { db, getWorkoutTemplates, getTemplateExercises, getAllExercises, advanceWeek, getCompletedWorkoutForWeek, endProgrammeEarly } from '../db/database'
+import { filterExercises } from '../utils/exerciseSearch'
 
 export default function ProgrammeDetailPage() {
   const { id } = useParams()
@@ -109,9 +110,7 @@ export default function ProgrammeDetailPage() {
     navigate('/programmes')
   }
 
-  const filteredExercises = allExercises?.filter((ex) =>
-    ex.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []
+  const filteredExercises = filterExercises(allExercises, searchQuery)
 
   const handleUpdateExercise = async (templateExerciseId, updates) => {
     await db.templateExercises.update(templateExerciseId, updates)

@@ -4,6 +4,7 @@ import { Header } from '../components/layout'
 import { Card, Input, Modal, Button } from '../components/common'
 import { db, getAllExercises } from '../db/database'
 import { muscleGroups, equipmentTypes } from '../data/defaultExercises'
+import { exerciseMatchesQuery } from '../utils/exerciseSearch'
 
 export default function ExercisesPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,7 +23,7 @@ export default function ExercisesPage() {
     if (!exercises) return []
 
     return exercises.filter((exercise) => {
-      const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = exerciseMatchesQuery(exercise, searchQuery)
       const matchesMuscle = !selectedMuscle || exercise.muscleGroups.includes(selectedMuscle)
       const matchesEquipment = !selectedEquipment || exercise.equipment === selectedEquipment
       return matchesSearch && matchesMuscle && matchesEquipment

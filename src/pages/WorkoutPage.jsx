@@ -6,6 +6,7 @@ import { Button, Modal, Card, Input } from '../components/common'
 import { ExerciseCard } from '../components/workout'
 import { useWorkout } from '../context/WorkoutContext'
 import { getAllExercises, getSetting, getTemplateExercises, getExerciseById, getActiveProgramme, getWorkoutTemplates } from '../db/database'
+import { filterExercises } from '../utils/exerciseSearch'
 
 export default function WorkoutPage() {
   const navigate = useNavigate()
@@ -100,9 +101,7 @@ export default function WorkoutPage() {
     })
   }
 
-  const filteredExercises = allExercises?.filter((ex) =>
-    ex.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []
+  const filteredExercises = filterExercises(allExercises, searchQuery)
 
   const handleSelectExercise = (exercise) => {
     addExerciseToWorkout(exercise)
