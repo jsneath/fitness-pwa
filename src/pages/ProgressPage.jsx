@@ -11,7 +11,8 @@ import {
   StreakCalendar,
   MuscleMap,
   InsightCard,
-  generateInsights
+  generateInsights,
+  VolumePanel
 } from '../components/progress'
 import { db, getWorkoutLogs, getBodyMetrics, addBodyMetric, getAllExercises } from '../db/database'
 
@@ -182,6 +183,7 @@ export default function ProgressPage() {
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
+    { id: 'volume', label: 'Volume' },
     { id: 'body', label: 'Body' },
     { id: 'badges', label: 'Badges' }
   ]
@@ -259,6 +261,18 @@ export default function ProgressPage() {
 
               {/* Muscle Map */}
               <MuscleMap muscleData={muscleData} view="front" />
+            </motion.div>
+          )}
+
+          {/* Volume Tab */}
+          {activeTab === 'volume' && (
+            <motion.div
+              key="volume"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <VolumePanel />
             </motion.div>
           )}
 

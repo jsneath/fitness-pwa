@@ -89,7 +89,7 @@ export default function WorkoutDetailPage() {
       <>
         <Header title="Workout" showBack />
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
       </>
     )
@@ -105,7 +105,7 @@ export default function WorkoutDetailPage() {
         rightAction={
           <button
             onClick={handleDelete}
-            className="p-2 rounded-full hover:bg-gray-100 text-red-500"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-border text-red-500"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -117,9 +117,9 @@ export default function WorkoutDetailPage() {
       <div className="space-y-4 pt-4">
         {/* Workout Info */}
         <Card>
-          <div className="text-sm text-gray-500 mb-1">{formatDate(workout.date)}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{formatDate(workout.date)}</div>
           {workout.startTime && workout.endTime && (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Duration: {formatDuration(workout.startTime, workout.endTime)}
             </div>
           )}
@@ -128,20 +128,20 @@ export default function WorkoutDetailPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <Card className="text-center py-3">
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {Object.keys(groupedSets).length}
             </div>
-            <div className="text-xs text-gray-500">Exercises</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Exercises</div>
           </Card>
           <Card className="text-center py-3">
-            <div className="text-2xl font-bold text-gray-900">{totalSets}</div>
-            <div className="text-xs text-gray-500">Work Sets</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalSets}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Work Sets</div>
           </Card>
           <Card className="text-center py-3">
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {totalVolume > 1000 ? `${(totalVolume / 1000).toFixed(1)}k` : totalVolume}
             </div>
-            <div className="text-xs text-gray-500">Volume</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Volume</div>
           </Card>
         </div>
 
@@ -158,15 +158,15 @@ export default function WorkoutDetailPage() {
               <Card key={exerciseId}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{exercise.name}</h3>
-                    <p className="text-sm text-gray-500">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{exercise.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {workSets.length} sets • {exerciseVolume.toLocaleString()} kg
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     <div className="col-span-2">Set</div>
                     <div className="col-span-4">Weight</div>
                     <div className="col-span-3">Reps</div>
@@ -176,7 +176,7 @@ export default function WorkoutDetailPage() {
                     <div
                       key={set.id}
                       className={`grid grid-cols-12 gap-2 py-2 rounded-lg ${
-                        set.isWarmup ? 'bg-yellow-50 text-gray-500' : ''
+                        set.isWarmup ? 'bg-yellow-50 text-gray-500 dark:text-gray-400' : ''
                       }`}
                     >
                       <div className="col-span-2 font-medium">

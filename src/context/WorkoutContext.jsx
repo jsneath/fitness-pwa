@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { db, addWorkoutLog, addSetLog, getSetting, addExerciseFeedback } from '../db/database'
+import { saveWorkout } from '../db/database'
 
 const WorkoutContext = createContext(null)
 
@@ -33,28 +33,11 @@ export function WorkoutProvider({ children }) {
   const savedState = loadWorkoutState()
   const [activeWorkout, setActiveWorkout] = useState(savedState?.activeWorkout || null)
   const [exercises, setExercises] = useState(savedState?.exercises || [])
-  const [restTimer, setRestTimer] = useState({
-    isRunning: false,
-    duration: 90,
-    remaining: 0
-  })
-  const [autoStartTimer, setAutoStartTimer] = useState(true)
 
   // Auto-save workout state whenever it changes
   useEffect(() => {
     saveWorkoutState(activeWorkout, exercises)
   }, [activeWorkout, exercises])
-
-  // Load settings
-  useEffect(() => {
-    const loadSettings = async () => {
-      const duration = await getSetting('restTimerDuration')
-      const autoStart = await getSetting('autoStartRestTimer')
-      if (duration) setRestTimer((prev) => ({ ...prev, duration }))
-      if (autoStart !== undefined) setAutoStartTimer(autoStart)
-    }
-    loadSettings()
-  }, [])
 
   const startWorkout = useCallback((templateId = null, programmeId = null, weekNumber = null, initialExercises = []) => {
     const now = new Date()
@@ -116,46 +99,6 @@ export function WorkoutProvider({ children }) {
     })
   }, [])
 
-  const startRestTimer = useCallback((customDuration = null) => {
-    const duration = customDuration || restTimer.duration
-    setRestTimer({
-      isRunning: true,
-      duration: restTimer.duration,
-      remaining: duration
-    })
-  }, [restTimer.duration])
-
-  const stopRestTimer = useCallback(() => {
-    setRestTimer((prev) => ({ ...prev, isRunning: false, remaining: 0 }))
-  }, [])
-
-  const adjustRestTimer = useCallback((seconds) => {
-    setRestTimer((prev) => ({
-      ...prev,
-      remaining: Math.max(0, prev.remaining + seconds)
-    }))
-  }, [])
-
-  // Rest timer countdown
-  useEffect(() => {
-    if (!restTimer.isRunning || restTimer.remaining <= 0) return
-
-    const interval = setInterval(() => {
-      setRestTimer((prev) => {
-        if (prev.remaining <= 1) {
-          // Timer complete - vibrate if supported
-          if ('vibrate' in navigator) {
-            navigator.vibrate([200, 100, 200])
-          }
-          return { ...prev, isRunning: false, remaining: 0 }
-        }
-        return { ...prev, remaining: prev.remaining - 1 }
-      })
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [restTimer.isRunning, restTimer.remaining])
-
   const finishWorkout = useCallback(async (notes = '') => {
     if (!activeWorkout) return null
 
@@ -165,53 +108,11 @@ export function WorkoutProvider({ children }) {
       notes
     }
 
-    const workoutLogId = await addWorkoutLog(workoutLog)
-
-    // Save all sets and collect feedback for each exercise
-    for (const exercise of exercises) {
-      let exercisePumpRating = null
-      let exerciseSorenessRating = null
-      let exerciseFatigueRating = null
-
-      for (let i = 0; i < exercise.sets.length; i++) {
-        const set = exercise.sets[i]
-        await addSetLog({
-          workoutLogId,
-          exerciseId: exercise.id,
-          setNumber: i + 1,
-          weight: set.weight,
-          reps: set.reps,
-          rpe: set.rpe || null,
-          rir: set.rir !== undefined ? set.rir : null,
-          e1rm: set.e1rm || null,
-          isWarmup: set.isWarmup || false,
-          timestamp: set.timestamp,
-          pumpRating: set.pumpRating || null,
-          sorenessRating: set.sorenessRating || null,
-          fatigueRating: set.fatigueRating || null
-        })
-
-        // Collect feedback from sets (use the last non-null value for exercise-level feedback)
-        if (set.pumpRating) exercisePumpRating = set.pumpRating
-        if (set.sorenessRating) exerciseSorenessRating = set.sorenessRating
-        if (set.fatigueRating) exerciseFatigueRating = set.fatigueRating
-      }
-
-      // Save exercise-level feedback if any was provided
-      if (exercisePumpRating || exerciseSorenessRating || exerciseFatigueRating) {
-        await addExerciseFeedback({
-          workoutLogId,
-          exerciseId: exercise.id,
-          pumpRating: exercisePumpRating,
-          sorenessRating: exerciseSorenessRating,
-          fatigueRating: exerciseFatigueRating
-        })
-      }
-    }
+    const { workoutLogId, newRecords } = await saveWorkout(workoutLog, exercises)
 
     setActiveWorkout(null)
     setExercises([])
-    return workoutLogId
+    return { workoutLogId, newRecords }
   }, [activeWorkout, exercises])
 
   const cancelWorkout = useCallback(() => {
@@ -224,16 +125,12 @@ export function WorkoutProvider({ children }) {
       value={{
         activeWorkout,
         exercises,
-        restTimer,
         startWorkout,
         addExerciseToWorkout,
         removeExerciseFromWorkout,
         addSet,
         updateSet,
         deleteSet,
-        startRestTimer,
-        stopRestTimer,
-        adjustRestTimer,
         finishWorkout,
         cancelWorkout
       }}

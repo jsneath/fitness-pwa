@@ -1,62 +1,50 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import confetti from 'canvas-confetti'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function PRCelebration({ show, exerciseName, value, type = 'weight', onComplete }) {
-  const fireConfetti = useCallback(() => {
-    // Check for reduced motion preference
+const DURATION = 3000
+
+export default function PRCelebration({ show, exerciseName, value, type = 'weight', unit = 'kg', onComplete }) {
+  // Held in a ref so a caller re-rendering (and passing a fresh callback) can't
+  // re-trigger the effect and fire a second burst of confetti.
+  const onCompleteRef = useRef(onComplete)
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
+
+  useEffect(() => {
+    if (!show) return
+
+    const dismiss = setTimeout(() => onCompleteRef.current?.(), DURATION + 500)
+
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return
+      return () => clearTimeout(dismiss)
     }
 
-    const duration = 3000
-    const animationEnd = Date.now() + duration
+    const animationEnd = Date.now() + DURATION
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 }
+    const colors = ['#6366f1', '#8b5cf6', '#a855f7', '#10b981', '#f59e0b']
+    const randomInRange = (min, max) => Math.random() * (max - min) + min
 
-    function randomInRange(min, max) {
-      return Math.random() * (max - min) + min
-    }
-
-    const interval = setInterval(function() {
+    const interval = setInterval(() => {
       const timeLeft = animationEnd - Date.now()
+      if (timeLeft <= 0) return clearInterval(interval)
 
-      if (timeLeft <= 0) {
-        return clearInterval(interval)
-      }
-
-      const particleCount = 50 * (timeLeft / duration)
-
-      // Confetti from both sides
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-        colors: ['#6366f1', '#8b5cf6', '#a855f7', '#10b981', '#f59e0b']
-      })
-      confetti({
-        ...defaults,
-        particleCount,
-        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-        colors: ['#6366f1', '#8b5cf6', '#a855f7', '#10b981', '#f59e0b']
-      })
+      const particleCount = 50 * (timeLeft / DURATION)
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }, colors })
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }, colors })
     }, 250)
 
-    // Haptic feedback
     if ('vibrate' in navigator) {
       navigator.vibrate([100, 50, 100, 50, 200])
     }
 
-    // Auto-dismiss after animation
-    setTimeout(() => {
-      if (onComplete) onComplete()
-    }, duration + 500)
-  }, [onComplete])
-
-  useEffect(() => {
-    if (show) {
-      fireConfetti()
+    // Stop both if the card is dismissed early
+    return () => {
+      clearInterval(interval)
+      clearTimeout(dismiss)
     }
-  }, [show, fireConfetti])
+  }, [show])
 
   return (
     <AnimatePresence>
@@ -125,7 +113,7 @@ export default function PRCelebration({ show, exerciseName, value, type = 'weigh
               >
                 <span className="text-4xl font-black text-white">{value}</span>
                 <span className="text-lg font-bold text-white/80">
-                  {type === 'weight' ? 'kg' : 'reps'}
+                  {type === 'reps' ? 'reps' : unit}
                 </span>
               </motion.div>
 
@@ -144,28 +132,4 @@ export default function PRCelebration({ show, exerciseName, value, type = 'weigh
       )}
     </AnimatePresence>
   )
-}
-
-// Hook to detect PR
-export function usePRDetection(exerciseId, newE1rm, existingPRs) {
-  const checkForPR = useCallback(() => {
-    if (!newE1rm || !exerciseId) return null
-
-    const existingPR = existingPRs?.find(
-      pr => pr.exerciseId === exerciseId && pr.type === 'e1rm'
-    )
-
-    if (!existingPR || newE1rm > existingPR.value) {
-      return {
-        isPR: true,
-        value: newE1rm,
-        previousValue: existingPR?.value || 0,
-        improvement: existingPR ? newE1rm - existingPR.value : newE1rm
-      }
-    }
-
-    return null
-  }, [exerciseId, newE1rm, existingPRs])
-
-  return checkForPR()
 }

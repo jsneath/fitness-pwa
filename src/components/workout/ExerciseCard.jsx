@@ -219,7 +219,13 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
                     {set.isWarmup ? 'W' : setIndex + 1 - exercise.sets.filter((s, i) => i < setIndex && s.isWarmup).length}
                   </div>
                   <div className="col-span-3 font-bold text-slate-800 dark:text-slate-100">
-                    {set.weight} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">{weightUnit}</span>
+                    {set.weight > 0 ? (
+                      <>
+                        {set.weight} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">{weightUnit}</span>
+                      </>
+                    ) : (
+                      <span className="text-sm">BW</span>
+                    )}
                   </div>
                   <div className="col-span-2 font-bold text-slate-800 dark:text-slate-100">
                     {set.reps}
@@ -268,7 +274,9 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
                     <div key={i} className="flex items-center gap-3 text-sm py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-dark-surface-elevated">
                       <span className="font-bold text-slate-400 dark:text-slate-500 w-5">{i + 1}</span>
                       <span className="font-semibold text-slate-700 dark:text-slate-200">
-                        {set.weight}<span className="text-xs font-normal text-slate-400 ml-0.5">{weightUnit}</span>
+                        {set.weight > 0
+                          ? <>{set.weight}<span className="text-xs font-normal text-slate-400 ml-0.5">{weightUnit}</span></>
+                          : 'BW'}
                       </span>
                       <span className="text-slate-400">×</span>
                       <span className="font-semibold text-slate-700 dark:text-slate-200">{set.reps} reps</span>

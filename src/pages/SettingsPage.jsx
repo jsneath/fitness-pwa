@@ -5,14 +5,13 @@ import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
 import { db, getSetting, setSetting, exportAllData, importAllData, addCustomExercise, deleteCustomExercise } from '../db/database'
 import { useTheme } from '../context/ThemeContext'
+import { VolumeLandmarksEditor } from '../components/progress'
 import { muscleGroups, equipmentTypes } from '../data/defaultExercises'
 
 export default function SettingsPage() {
   const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const [weightUnit, setWeightUnit] = useState('kg')
-  const [restTimerDuration, setRestTimerDuration] = useState(90)
-  const [autoStartRestTimer, setAutoStartRestTimer] = useState(true)
   const [importStatus, setImportStatus] = useState(null)
   const fileInputRef = useRef(null)
 
@@ -41,12 +40,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadSettings = async () => {
       const unit = await getSetting('weightUnit')
-      const duration = await getSetting('restTimerDuration')
-      const autoStart = await getSetting('autoStartRestTimer')
-
       if (unit) setWeightUnit(unit)
-      if (duration) setRestTimerDuration(duration)
-      if (autoStart !== undefined) setAutoStartRestTimer(autoStart)
     }
     loadSettings()
   }, [])
@@ -54,16 +48,6 @@ export default function SettingsPage() {
   const handleWeightUnitChange = async (unit) => {
     setWeightUnit(unit)
     await setSetting('weightUnit', unit)
-  }
-
-  const handleRestTimerChange = async (duration) => {
-    setRestTimerDuration(duration)
-    await setSetting('restTimerDuration', duration)
-  }
-
-  const handleAutoStartChange = async (autoStart) => {
-    setAutoStartRestTimer(autoStart)
-    await setSetting('autoStartRestTimer', autoStart)
   }
 
   const handleExport = async () => {
@@ -110,8 +94,6 @@ export default function SettingsPage() {
       fileInputRef.current.value = ''
     }
   }
-
-  const restTimerOptions = [30, 60, 90, 120, 180, 240, 300]
 
   const handleAddExercise = async () => {
     if (!newExerciseName.trim()) {
@@ -235,40 +217,10 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        {/* Rest Timer */}
+        {/* Volume Landmarks */}
         <Card>
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Default Rest Timer</h3>
-          <div className="flex flex-wrap gap-2">
-            {restTimerOptions.map((seconds) => (
-              <button
-                key={seconds}
-                onClick={() => handleRestTimerChange(seconds)}
-                className={`py-2 px-4 rounded-lg font-medium transition-colors ${
-                  restTimerDuration === seconds
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
-            <span className="text-gray-700 dark:text-gray-300">Auto-start after logging set</span>
-            <button
-              onClick={() => handleAutoStartChange(!autoStartRestTimer)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                autoStartRestTimer ? 'bg-blue-600' : 'bg-gray-300 dark:bg-dark-border'
-              }`}
-            >
-              <span
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
-                  autoStartRestTimer ? 'left-7' : 'left-1'
-                }`}
-              />
-            </button>
-          </div>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Volume Landmarks</h3>
+          <VolumeLandmarksEditor />
         </Card>
 
         {/* Custom Exercises */}

@@ -66,8 +66,12 @@ export default function SetInput({ onSave, previousSet = null, weightUnit = 'kg'
     const weightNum = parseFloat(weight) || 0
     const repsNum = parseInt(reps) || 0
 
-    if (weightNum > 0 && repsNum > 0) {
-      const e1rm = calculateE1RM(weightNum, repsNum)
+    // Weight of 0 is valid — that's an unloaded bodyweight set (push-ups, pull-ups).
+    // Only reps are actually required.
+    if (repsNum > 0) {
+      // e1RM is meaningless without external load, so leave it unset for
+      // bodyweight sets rather than storing a misleading 0.
+      const e1rm = weightNum > 0 ? calculateE1RM(weightNum, repsNum) : null
       onSave({
         weight: weightNum,
         reps: repsNum,
@@ -121,6 +125,9 @@ export default function SetInput({ onSave, previousSet = null, weightUnit = 'kg'
       <div>
         <label className="text-sm font-medium text-gray-600 dark:text-gray-300 block mb-2">
           Weight ({weightUnit})
+          {weightNum === 0 && (
+            <span className="text-gray-400 dark:text-gray-500"> • 0 = bodyweight</span>
+          )}
         </label>
         <div className="flex items-center gap-3">
           <motion.button
@@ -327,7 +334,7 @@ export default function SetInput({ onSave, previousSet = null, weightUnit = 'kg'
           fullWidth
           size="lg"
           onClick={handleSave}
-          disabled={weightNum <= 0 || repsNum <= 0}
+          disabled={repsNum <= 0}
         >
           Log Set
         </Button>

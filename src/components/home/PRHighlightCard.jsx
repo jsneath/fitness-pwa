@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../../db/database'
+import { db, getSetting } from '../../db/database'
 import BentoCard from './BentoCard'
 
 export default function PRHighlightCard() {
@@ -10,7 +10,10 @@ export default function PRHighlightCard() {
     db.personalRecords.orderBy('date').reverse().limit(10).toArray()
   , [])
 
+  // Counted separately - personalRecords above is capped at 10 for the display
+  const totalPRs = useLiveQuery(() => db.personalRecords.count(), [], 0)
   const exercises = useLiveQuery(() => db.exercises.toArray(), [])
+  const weightUnit = useLiveQuery(() => getSetting('weightUnit'), [], 'kg')
 
   const recentPR = useMemo(() => {
     if (!personalRecords || personalRecords.length === 0) return null
@@ -23,8 +26,6 @@ export default function PRHighlightCard() {
       exerciseName: exercise?.name || 'Exercise'
     }
   }, [personalRecords, exercises])
-
-  const totalPRs = personalRecords?.length || 0
 
   if (!recentPR) {
     return (
@@ -85,7 +86,7 @@ export default function PRHighlightCard() {
             <p className={`text-lg font-bold ${isRecent() ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>
               {recentPR.value}
               <span className={`text-xs font-medium ml-1 ${isRecent() ? 'text-white/80' : 'text-slate-400'}`}>
-                {recentPR.type === 'weight' ? 'kg' : 'reps'}
+                {recentPR.type === 'reps' ? 'reps' : weightUnit}
               </span>
             </p>
             <p className={`text-xs truncate ${isRecent() ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>
