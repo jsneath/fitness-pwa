@@ -232,10 +232,18 @@ export async function getEnhancedProgressionSuggestion(programmeId, exerciseId, 
   let suggestedReps = Math.round(avgReps)
   let message = ''
 
-  // RP-Style Progression Logic
-  if (avgRir !== null) {
-    const rirDiff = avgRir - targetRir // Positive = too easy, Negative = too hard
+  // Unloaded bodyweight work (push-ups, pull-ups) has no weight to add, so
+  // progression is rep-driven. Without this we'd suggest "2.5kg push-ups".
+  const isBodyweight = avgWeight === 0
 
+  // RP-Style Progression Logic
+  if (isBodyweight) {
+    suggestedWeight = 0
+    suggestedReps = Math.round(avgReps) + 1
+    message = avgReps >= maxReps
+      ? `Bodyweight — past your rep target, add load if you can, else aim for ${suggestedReps} reps`
+      : `Bodyweight — aim for ${suggestedReps} reps @ ${targetRir} RIR`
+  } else if (avgRir !== null) {
     if (avgReps >= maxReps && avgRir <= targetRir) {
       // Hit max reps at or below target RIR - increase weight
       let increase = weightIncrement
@@ -479,6 +487,138 @@ export async function addBodyMetric(metric) {
 
 export async function addExerciseFeedback(feedback) {
   return db.exerciseFeedback.add(feedback)
+}
+
+// ============================================
+// Personal Records
+// ============================================
+
+// PR types we track:
+//   'e1rm' - best estimated 1RM, the meaningful metric for loaded lifts
+//   'reps' - most reps in a single set, how unloaded bodyweight work progresses
+//
+// Returns the records that were newly set, so the caller can celebrate them.
+// Must be called from inside a transaction that includes personalRecords.
+async function detectPersonalRecords(workoutLogId, exerciseId, sets, date) {
+  const workingSets = sets.filter((s) => !s.isWarmup)
+  if (workingSets.length === 0) return []
+
+  const candidates = []
+
+  const loadedSets = workingSets.filter((s) => s.weight > 0 && s.e1rm > 0)
+  if (loadedSets.length > 0) {
+    candidates.push({
+      type: 'e1rm',
+      value: Math.max(...loadedSets.map((s) => s.e1rm))
+    })
+  }
+
+  const bodyweightSets = workingSets.filter((s) => !s.weight && s.reps > 0)
+  if (bodyweightSets.length > 0) {
+    candidates.push({
+      type: 'reps',
+      value: Math.max(...bodyweightSets.map((s) => s.reps))
+    })
+  }
+
+  if (candidates.length === 0) return []
+
+  const existing = await db.personalRecords
+    .where('exerciseId')
+    .equals(exerciseId)
+    .toArray()
+
+  const newRecords = []
+  for (const candidate of candidates) {
+    const previousBest = existing
+      .filter((r) => r.type === candidate.type)
+      .reduce((best, r) => Math.max(best, r.value), 0)
+
+    if (candidate.value > previousBest) {
+      const record = {
+        exerciseId,
+        type: candidate.type,
+        value: candidate.value,
+        date,
+        workoutLogId,
+        previousBest
+      }
+      await db.personalRecords.add(record)
+      newRecords.push(record)
+    }
+  }
+
+  return newRecords
+}
+
+// Persist a finished workout: the log, every set, per-exercise feedback, and any
+// personal records it produced. All in one transaction so a mid-save crash
+// (backgrounded tab, phone dying) can't leave a workout with half its sets.
+export async function saveWorkout(workoutLog, exercises) {
+  return db.transaction(
+    'rw',
+    db.workoutLogs,
+    db.setLogs,
+    db.exerciseFeedback,
+    db.personalRecords,
+    async () => {
+      const workoutLogId = await db.workoutLogs.add(workoutLog)
+      const newRecords = []
+
+      for (const exercise of exercises) {
+        const savedSets = []
+
+        for (let i = 0; i < exercise.sets.length; i++) {
+          const set = exercise.sets[i]
+          const setLog = {
+            workoutLogId,
+            exerciseId: exercise.id,
+            setNumber: i + 1,
+            weight: set.weight,
+            reps: set.reps,
+            rpe: set.rpe || null,
+            rir: set.rir !== undefined ? set.rir : null,
+            e1rm: set.e1rm || null,
+            isWarmup: set.isWarmup || false,
+            timestamp: set.timestamp,
+            pumpRating: set.pumpRating || null,
+            sorenessRating: set.sorenessRating || null,
+            fatigueRating: set.fatigueRating || null
+          }
+          await db.setLogs.add(setLog)
+          savedSets.push(setLog)
+        }
+
+        // Exercise-level feedback: take the last non-null rating across the sets
+        const feedback = exercise.sets.reduce(
+          (acc, set) => ({
+            pumpRating: set.pumpRating || acc.pumpRating,
+            sorenessRating: set.sorenessRating || acc.sorenessRating,
+            fatigueRating: set.fatigueRating || acc.fatigueRating
+          }),
+          { pumpRating: null, sorenessRating: null, fatigueRating: null }
+        )
+
+        if (feedback.pumpRating || feedback.sorenessRating || feedback.fatigueRating) {
+          await db.exerciseFeedback.add({
+            workoutLogId,
+            exerciseId: exercise.id,
+            ...feedback
+          })
+        }
+
+        const records = await detectPersonalRecords(
+          workoutLogId,
+          exercise.id,
+          savedSets,
+          workoutLog.date
+        )
+        newRecords.push(...records.map((r) => ({ ...r, exerciseName: exercise.name })))
+      }
+
+      return { workoutLogId, newRecords }
+    }
+  )
 }
 
 export async function getExerciseFeedback(workoutLogId, exerciseId) {

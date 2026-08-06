@@ -72,7 +72,7 @@ export default function ExercisesPage() {
         rightAction={
           <button
             onClick={() => setShowAddModal(true)}
-            className="p-2 rounded-full hover:bg-gray-100 active:bg-gray-200"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-dark-border active:bg-gray-200"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -95,7 +95,7 @@ export default function ExercisesPage() {
           <select
             value={selectedMuscle}
             onChange={(e) => setSelectedMuscle(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-sm"
           >
             <option value="">All Muscles</option>
             {muscleGroups.map((muscle) => (
@@ -105,7 +105,7 @@ export default function ExercisesPage() {
           <select
             value={selectedEquipment}
             onChange={(e) => setSelectedEquipment(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+            className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-sm"
           >
             <option value="">All Equipment</option>
             {equipmentTypes.map((equip) => (
@@ -118,7 +118,7 @@ export default function ExercisesPage() {
         <div className="space-y-6">
           {Object.entries(groupedExercises).map(([muscle, muscleExercises]) => (
             <section key={muscle}>
-              <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 {muscle} ({muscleExercises.length})
               </h2>
               <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function ExercisesPage() {
                   <Card key={exercise.id}>
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="font-medium text-gray-900 dark:text-white">
                           {exercise.name}
                           {exercise.isCustom && (
                             <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
@@ -134,14 +134,14 @@ export default function ExercisesPage() {
                             </span>
                           )}
                         </h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {exercise.equipment}
                         </p>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {exercise.muscleGroups.map((muscle) => (
                             <span
                               key={muscle}
-                              className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                              className="text-xs bg-gray-100 dark:bg-dark-surface-elevated text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
                             >
                               {muscle}
                             </span>
@@ -157,7 +157,7 @@ export default function ExercisesPage() {
 
           {filteredExercises.length === 0 && (
             <Card className="text-center py-8">
-              <p className="text-gray-500">No exercises found</p>
+              <p className="text-gray-500 dark:text-gray-400">No exercises found</p>
             </Card>
           )}
         </div>
@@ -178,7 +178,7 @@ export default function ExercisesPage() {
           />
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-2">
               Muscle Groups
             </label>
             <div className="flex flex-wrap gap-2">
@@ -189,7 +189,7 @@ export default function ExercisesPage() {
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                     newExercise.muscleGroups.includes(muscle)
                       ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300'
+                      : 'bg-white dark:bg-dark-surface text-gray-700 dark:text-gray-200 border-gray-300 dark:border-dark-border'
                   }`}
                 >
                   {muscle}
@@ -199,7 +199,7 @@ export default function ExercisesPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-2">
               Equipment
             </label>
             <div className="flex flex-wrap gap-2">
@@ -210,7 +210,7 @@ export default function ExercisesPage() {
                   className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                     newExercise.equipment === equip
                       ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300'
+                      : 'bg-white dark:bg-dark-surface text-gray-700 dark:text-gray-200 border-gray-300 dark:border-dark-border'
                   }`}
                 >
                   {equip}

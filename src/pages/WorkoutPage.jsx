@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Header } from '../components/layout'
 import { Button, Modal, Card, Input } from '../components/common'
-import { ExerciseCard } from '../components/workout'
+import { ExerciseCard, PRCelebration } from '../components/workout'
 import { useWorkout } from '../context/WorkoutContext'
 import { getAllExercises, getSetting, getTemplateExercises, getExerciseById, getActiveProgramme, getWorkoutTemplates } from '../db/database'
 import { filterExercises } from '../utils/exerciseSearch'
@@ -22,11 +22,13 @@ export default function WorkoutPage() {
 
   const [showExercisePicker, setShowExercisePicker] = useState(false)
   const [showFinishModal, setShowFinishModal] = useState(false)
-  const [showStartOptions, setShowStartOptions] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [workoutNotes, setWorkoutNotes] = useState('')
   const [weightUnit, setWeightUnit] = useState('kg')
   const [templateInfo, setTemplateInfo] = useState(null)
+  // PRs are shown one at a time, then we continue to the post-workout screen
+  const [prQueue, setPrQueue] = useState([])
+  const [pendingNavigation, setPendingNavigation] = useState(null)
   const isLoadingTemplateRef = useRef(false)
 
   const allExercises = useLiveQuery(() => getAllExercises(), [])
@@ -42,57 +44,55 @@ export default function WorkoutPage() {
     })
   }, [])
 
-  // Handle starting workout from programme template
-  useEffect(() => {
-    const state = location.state
-    if (state?.templateId && !activeWorkout && !isLoadingTemplateRef.current) {
-      startWorkoutFromTemplate(state)
-    }
-  }, [location.state])
-
-  const startWorkoutFromTemplate = async (state) => {
+  const startWorkoutFromTemplate = useCallback(async (state) => {
     // Prevent duplicate loading
     if (isLoadingTemplateRef.current) return
     isLoadingTemplateRef.current = true
 
-    const { templateId, programmeId, weekNumber, templateName } = state
+    try {
+      const { templateId, programmeId, weekNumber, templateName } = state
 
-    // Set template info for UI
-    setTemplateInfo({ templateId, programmeId, weekNumber, templateName })
-    setWorkoutNotes(templateName)
+      // Set template info for UI
+      setTemplateInfo({ templateId, programmeId, weekNumber, templateName })
+      setWorkoutNotes(templateName)
 
-    // Load exercises from template FIRST
-    const templateExercises = await getTemplateExercises(templateId)
-    const exercisesToAdd = []
-    for (const te of templateExercises) {
-      const exercise = await getExerciseById(te.exerciseId)
-      if (exercise) {
-        exercisesToAdd.push({
-          ...exercise,
-          templateExerciseId: te.id,
-          targetSets: te.targetSets,
-          minReps: te.minReps,
-          maxReps: te.maxReps
-        })
+      // Load exercises from template FIRST
+      const templateExercises = await getTemplateExercises(templateId)
+      const exercisesToAdd = []
+      for (const te of templateExercises) {
+        const exercise = await getExerciseById(te.exerciseId)
+        if (exercise) {
+          exercisesToAdd.push({
+            ...exercise,
+            templateExerciseId: te.id,
+            targetSets: te.targetSets,
+            minReps: te.minReps,
+            maxReps: te.maxReps
+          })
+        }
       }
-    }
 
-    // Start workout with exercises loaded atomically
-    startWorkout(templateId, programmeId, weekNumber, exercisesToAdd)
+      // Start workout with exercises loaded atomically
+      startWorkout(templateId, programmeId, weekNumber, exercisesToAdd)
 
-    // Clear the location state
-    navigate('/workout', { replace: true })
-
-    // Reset the loading flag after a short delay
-    setTimeout(() => {
+      // Clear the location state so this doesn't re-fire
+      navigate('/workout', { replace: true })
+    } finally {
       isLoadingTemplateRef.current = false
-    }, 100)
-  }
+    }
+  }, [navigate, startWorkout])
+
+  // Handle starting workout from programme template
+  useEffect(() => {
+    const state = location.state
+    if (state?.templateId && !activeWorkout) {
+      startWorkoutFromTemplate(state)
+    }
+  }, [location.state, activeWorkout, startWorkoutFromTemplate])
 
   const handleStartFromTemplate = async (template) => {
     if (!activeProgramme) return
 
-    setShowStartOptions(false)
     await startWorkoutFromTemplate({
       templateId: template.id,
       programmeId: activeProgramme.id,
@@ -113,17 +113,34 @@ export default function WorkoutPage() {
     // Capture programme info before finishing (activeWorkout gets cleared)
     const programmeId = activeWorkout?.programmeId
 
-    const workoutId = await finishWorkout(workoutNotes)
-    if (workoutId) {
-      // Navigate back to programme page if this was a programme workout
-      if (programmeId) {
-        navigate(`/programmes/${programmeId}`)
-      } else {
-        navigate('/history')
-      }
-    }
+    const result = await finishWorkout(workoutNotes)
     setTemplateInfo(null)
+    setShowFinishModal(false)
+    if (!result) return
+
+    // Back to the programme page if this was a programme workout
+    const destination = programmeId ? `/programmes/${programmeId}` : '/history'
+
+    if (result.newRecords.length > 0) {
+      // Celebrate first, then navigate once the user has seen them all
+      setPrQueue(result.newRecords)
+      setPendingNavigation(destination)
+    } else {
+      navigate(destination)
+    }
   }
+
+  const handlePRDismissed = useCallback(() => {
+    setPrQueue((queue) => queue.slice(1))
+  }, [])
+
+  // Once the last PR has been dismissed, continue to the post-workout screen
+  useEffect(() => {
+    if (pendingNavigation && prQueue.length === 0) {
+      setPendingNavigation(null)
+      navigate(pendingNavigation)
+    }
+  }, [prQueue, pendingNavigation, navigate])
 
   const handleCancelWorkout = () => {
     if (exercises.length > 0) {
@@ -147,11 +164,27 @@ export default function WorkoutPage() {
     0
   )
 
+  // Finishing a workout clears activeWorkout, which drops us into the start-screen
+  // branch below — so this has to render in both branches or the PRs never show.
+  // Remounts per record so each one animates.
+  const prCelebration = (
+    <PRCelebration
+      key={prQueue[0] ? `${prQueue[0].exerciseId}-${prQueue[0].type}` : 'none'}
+      show={prQueue.length > 0}
+      exerciseName={prQueue[0]?.exerciseName}
+      value={prQueue[0]?.value}
+      type={prQueue[0]?.type === 'reps' ? 'reps' : 'weight'}
+      unit={weightUnit}
+      onComplete={handlePRDismissed}
+    />
+  )
+
   // No active workout - show start screen
   if (!activeWorkout) {
     return (
       <>
         <Header title="Workout" />
+        {prCelebration}
         <div className="space-y-6 pt-4">
           {/* Active Programme Quick Start */}
           {activeProgramme && programmeTemplates && programmeTemplates.length > 0 && (
@@ -164,8 +197,8 @@ export default function WorkoutPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-800">{activeProgramme.name}</h3>
-                    <p className="text-sm text-slate-500">
+                    <h3 className="font-bold text-slate-800 dark:text-slate-100">{activeProgramme.name}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       Week {activeProgramme.currentWeek || 1} of {activeProgramme.durationWeeks}
                     </p>
                   </div>
@@ -182,15 +215,15 @@ export default function WorkoutPage() {
                   <button
                     key={template.id}
                     onClick={() => handleStartFromTemplate(template)}
-                    className="w-full flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 active:scale-[0.99] transition-all duration-200"
+                    className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-dark-surface-elevated rounded-xl hover:bg-slate-100 dark:hover:bg-dark-border active:scale-[0.99] transition-all duration-200"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
                         {index + 1}
                       </div>
-                      <span className="font-medium text-slate-800">{template.name}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{template.name}</span>
                     </div>
-                    <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <svg className="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </button>
@@ -201,12 +234,12 @@ export default function WorkoutPage() {
 
           {/* Empty Workout Option */}
           <div className="text-center py-8 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-dark-surface-elevated flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
               </svg>
             </div>
-            <p className="text-slate-500 mb-4">
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
               {activeProgramme ? 'Or start without a template' : 'Start a new workout and log your sets'}
             </p>
             <Button onClick={() => startWorkout()}>
@@ -235,7 +268,7 @@ export default function WorkoutPage() {
       <div className="space-y-4 pt-4 pb-32">
         {/* Week indicator for programme workouts */}
         {templateInfo && (
-          <div className="flex items-center gap-2 text-sm text-slate-500 animate-fade-in">
+          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 animate-fade-in">
             <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-1 rounded-full font-semibold text-xs shadow-lg shadow-indigo-500/30">
               Week {templateInfo.weekNumber}
             </span>
@@ -277,7 +310,7 @@ export default function WorkoutPage() {
         {/* Add Exercise Button */}
         <button
           onClick={() => setShowExercisePicker(true)}
-          className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-500 font-semibold hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50 transition-all duration-300"
+          className="w-full py-4 border-2 border-dashed border-slate-300 dark:border-dark-border rounded-2xl text-slate-500 dark:text-slate-400 font-semibold hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/50 transition-all duration-300"
         >
           + Add Exercise
         </button>
@@ -318,16 +351,16 @@ export default function WorkoutPage() {
               <button
                 key={exercise.id}
                 onClick={() => handleSelectExercise(exercise)}
-                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 active:bg-slate-100 border border-slate-200 transition-colors"
+                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-surface-elevated active:bg-slate-100 dark:active:bg-dark-border border border-slate-200 dark:border-dark-border transition-colors"
               >
-                <div className="font-medium text-slate-800">{exercise.name}</div>
-                <div className="text-sm text-slate-500">
+                <div className="font-medium text-slate-800 dark:text-slate-100">{exercise.name}</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">
                   {exercise.equipment} • {exercise.muscleGroups.join(', ')}
                 </div>
               </button>
             ))}
             {filteredExercises.length === 0 && (
-              <p className="text-center text-slate-500 py-4">No exercises found</p>
+              <p className="text-center text-slate-500 dark:text-slate-400 py-4">No exercises found</p>
             )}
           </div>
         </div>
@@ -346,7 +379,7 @@ export default function WorkoutPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <p className="text-slate-600 font-medium">
+            <p className="text-slate-600 dark:text-slate-300 font-medium">
               Great workout! You completed {totalSets} sets.
             </p>
           </div>
@@ -361,6 +394,8 @@ export default function WorkoutPage() {
           </Button>
         </div>
       </Modal>
+
+      {prCelebration}
     </>
   )
 }
