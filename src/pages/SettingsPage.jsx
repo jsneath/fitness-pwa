@@ -5,6 +5,7 @@ import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
 import { db, getSetting, setSetting, exportAllData, importAllData, addCustomExercise, deleteCustomExercise } from '../db/database'
 import { useTheme } from '../context/ThemeContext'
+import { VolumeLandmarksEditor } from '../components/progress'
 import { muscleGroups, equipmentTypes } from '../data/defaultExercises'
 
 export default function SettingsPage() {
@@ -214,6 +215,12 @@ export default function SettingsPage() {
               Pounds (lbs)
             </button>
           </div>
+        </Card>
+
+        {/* Volume Landmarks */}
+        <Card>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Volume Landmarks</h3>
+          <VolumeLandmarksEditor />
         </Card>
 
         {/* Custom Exercises */}
