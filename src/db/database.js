@@ -103,6 +103,25 @@ db.version(3).stores({
   })
 })
 
+// Version 4: Weekly volume landmarks (MEV/MAV/MRV) per muscle group
+db.version(4).stores({
+  exercises: '++id, name, *muscleGroups, equipment, isCustom',
+  programmes: '++id, name, createdAt, isActive, durationWeeks, daysPerWeek, currentWeek, startDate',
+  workoutTemplates: '++id, programmeId, name, dayNumber, order',
+  templateExercises: '++id, templateId, exerciseId, order, targetSets, minReps, maxReps, notes',
+  workoutLogs: '++id, date, templateId, programmeId, weekNumber, startTime, endTime, notes',
+  setLogs: '++id, workoutLogId, exerciseId, setNumber, weight, reps, rpe, rir, e1rm, isWarmup, timestamp, pumpRating, sorenessRating, fatigueRating',
+  exerciseFeedback: '++id, workoutLogId, exerciseId, pumpRating, sorenessRating, fatigueRating, notes',
+  weekLogs: '++id, programmeId, weekNumber, completedAt',
+  personalRecords: '++id, exerciseId, type, value, date, workoutLogId',
+  bodyMetrics: '++id, date, weight, bodyFat, notes',
+
+  // Editable per-muscle weekly set landmarks, keyed by muscle group name
+  volumeLandmarks: 'muscleGroup, mv, mev, mav, mrv',
+
+  settings: 'key, value'
+})
+
 // ============================================
 // RP Strength-Style Utility Functions
 // ============================================
@@ -126,31 +145,10 @@ export function getDefaultRirTarget(weekNumber, totalWeeks) {
   return 3 - cyclePosition // Week 1: 3, Week 2: 2, Week 3: 1, Week 4: 3, etc.
 }
 
-// Calculate feedback-based weight adjustment
-// Returns adjustment in kg (positive = add weight, negative = reduce)
-export function calculateFeedbackAdjustment(feedback, baseIncrement = 2.5) {
-  if (!feedback) return 0
-
-  let adjustment = 0
-
-  // Low pump (1-2): suggests not enough stimulus, add weight
-  if (feedback.pumpRating && feedback.pumpRating <= 2) {
-    adjustment += baseIncrement * 0.5 // Half increment
-  }
-
-  // High pump (5): good stimulus, maintain
-  // (no adjustment needed)
-
-  // High fatigue (4-5): suggests too much, reduce or hold
-  if (feedback.fatigueRating && feedback.fatigueRating >= 4) {
-    adjustment -= baseIncrement * 0.5
-  }
-
-  // High soreness (4-5): suggests recovery issues, reduce volume not weight
-  // (this is handled in rep/set recommendations, not weight)
-
-  return adjustment
-}
+// NOTE: pump/soreness/fatigue feedback deliberately does NOT adjust load here.
+// In RP-style autoregulation those signals govern how many SETS you do next
+// week, not how heavy you go — load is driven by rep performance against your
+// RIR target. Set progression lives in db/volume.js (getSetProgression).
 
 // Enhanced progression suggestion using RP-style autoregulation
 export async function getEnhancedProgressionSuggestion(programmeId, exerciseId, templateId, templateExercise, programme = null) {
@@ -223,8 +221,6 @@ export async function getEnhancedProgressionSuggestion(programmeId, exerciseId, 
     console.warn('Could not load exercise feedback:', e)
   }
 
-  const feedbackAdjustment = calculateFeedbackAdjustment(lastFeedback, weightIncrement)
-
   const minReps = templateExercise.minReps || 8
   const maxReps = templateExercise.maxReps || 12
 
@@ -255,18 +251,18 @@ export async function getEnhancedProgressionSuggestion(programmeId, exerciseId, 
         suggestedReps = Math.min(avgReps + 1, maxReps + 2) // Allow slight overshoot
         message = `Great progress! Weight jump would be >10%, so add a rep: ${suggestedReps} reps at ${avgWeight}kg`
       } else {
-        suggestedWeight = Math.round((avgWeight + increase + feedbackAdjustment) * 10) / 10
+        suggestedWeight = Math.round((avgWeight + increase) * 10) / 10
         suggestedReps = minReps
         message = `Increase weight to ${suggestedWeight}kg, aim for ${minReps}-${maxReps} reps @ ${targetRir} RIR`
       }
     } else if (avgRir > targetRir + 1) {
       // Too easy (RIR too high) - small weight bump
-      suggestedWeight = Math.round((avgWeight + weightIncrement * 0.5 + feedbackAdjustment) * 10) / 10
+      suggestedWeight = Math.round((avgWeight + weightIncrement * 0.5) * 10) / 10
       suggestedReps = Math.round(avgReps)
       message = `Too easy (${Math.round(avgRir)} RIR). Add weight: ${suggestedWeight}kg @ ${targetRir} RIR`
     } else if (avgRir < targetRir - 1 && lastFeedback?.fatigueRating >= 4) {
-      // Too hard + high fatigue - hold or reduce
-      suggestedWeight = Math.round((avgWeight + feedbackAdjustment) * 10) / 10
+      // Too hard + high fatigue - hold load (volume is cut separately)
+      suggestedWeight = avgWeight
       suggestedReps = Math.max(minReps, Math.round(avgReps) - 1)
       message = `High fatigue detected. Maintain ${suggestedWeight}kg, aim for ${targetRir} RIR`
     } else if (avgReps < minReps) {
@@ -303,8 +299,7 @@ export async function getEnhancedProgressionSuggestion(programmeId, exerciseId, 
     suggestedReps,
     targetRir,
     message,
-    weekNumber: lastPerformance.workoutLog.weekNumber,
-    feedbackAdjustment: Math.round(feedbackAdjustment * 10) / 10
+    weekNumber: lastPerformance.workoutLog.weekNumber
   }
   } catch (error) {
     console.error('Error getting enhanced progression suggestion:', error)
@@ -862,9 +857,10 @@ export async function exportAllData() {
     weekLogs: await db.weekLogs.toArray(),
     personalRecords: await db.personalRecords.toArray(),
     bodyMetrics: await db.bodyMetrics.toArray(),
+    volumeLandmarks: await db.volumeLandmarks.toArray(),
     settings: await db.settings.toArray(),
     exportDate: new Date().toISOString(),
-    version: 3
+    version: 4
   }
   return data
 }
@@ -882,6 +878,7 @@ export async function importAllData(data) {
     db.weekLogs,
     db.personalRecords,
     db.bodyMetrics,
+    db.volumeLandmarks,
     db.settings,
     async () => {
       // Clear existing data
@@ -895,6 +892,7 @@ export async function importAllData(data) {
       await db.weekLogs.clear()
       await db.personalRecords.clear()
       await db.bodyMetrics.clear()
+      await db.volumeLandmarks.clear()
       await db.settings.clear()
 
       // Import new data
@@ -908,6 +906,7 @@ export async function importAllData(data) {
       if (data.weekLogs) await db.weekLogs.bulkAdd(data.weekLogs)
       if (data.personalRecords) await db.personalRecords.bulkAdd(data.personalRecords)
       if (data.bodyMetrics) await db.bodyMetrics.bulkAdd(data.bodyMetrics)
+      if (data.volumeLandmarks) await db.volumeLandmarks.bulkAdd(data.volumeLandmarks)
       if (data.settings) await db.settings.bulkAdd(data.settings)
     }
   )

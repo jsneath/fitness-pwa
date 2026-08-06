@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
 import { db, getWorkoutTemplates, getTemplateExercises, getAllExercises, advanceWeek, getCompletedWorkoutForWeek, endProgrammeEarly } from '../db/database'
+import { SetRecommendations } from '../components/progress'
 import { filterExercises } from '../utils/exerciseSearch'
 
 export default function ProgrammeDetailPage() {
@@ -325,9 +326,17 @@ export default function ProgrammeDetailPage() {
           <p className="text-slate-600 dark:text-slate-300 text-center">
             Mark Week {programme.currentWeek} as complete and advance to Week {programme.currentWeek + 1}?
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-            Your weights and reps will be used for progressive overload suggestions.
-          </p>
+
+          <div className="border-t border-slate-100 dark:border-dark-border pt-3">
+            <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-1">
+              Volume for Week {programme.currentWeek + 1}
+            </h4>
+            <SetRecommendations
+              programmeId={programme.id}
+              weekNumber={programme.currentWeek}
+            />
+          </div>
+
           <div className="flex gap-3">
             <Button
               fullWidth
