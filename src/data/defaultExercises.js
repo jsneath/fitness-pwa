@@ -54,7 +54,7 @@ export const defaultExercises = [
   { name: 'Chest Supported Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Incline Dumbbell Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Kroc Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Dumbbells', isCustom: false },
-  { name: 'Dumbbell Pullover', muscleGroups: ['Back', 'Chest'], equipment: 'Dumbbells', isCustom: false },
+  // Dumbbell Pullover is listed once, in the chest section — it already tags Back.
   { name: 'Seal Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Dumbbells', isCustom: false },
   // Cable
   { name: 'Lat Pulldown', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
@@ -105,7 +105,7 @@ export const defaultExercises = [
   { name: 'Dumbbell Upright Row', muscleGroups: ['Shoulders', 'Traps'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Lu Raises', muscleGroups: ['Shoulders'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Y Raises', muscleGroups: ['Shoulders', 'Back'], equipment: 'Dumbbells', isCustom: false },
-  { name: 'Dumbbell Shrugs', muscleGroups: ['Traps'], equipment: 'Dumbbells', isCustom: false },
+  // Dumbbell Shrugs is listed once, in the back/traps section above.
   // Cable
   { name: 'Cable Lateral Raise', muscleGroups: ['Shoulders'], equipment: 'Cable', isCustom: false },
   { name: 'Cable Front Raise', muscleGroups: ['Shoulders'], equipment: 'Cable', isCustom: false },
@@ -256,7 +256,9 @@ export const defaultExercises = [
   // Dumbbells
   { name: 'Dumbbell Hip Thrust', muscleGroups: ['Glutes', 'Hamstrings'], equipment: 'Dumbbells', isCustom: false },
   // Cable
-  { name: 'Cable Kickback', muscleGroups: ['Glutes'], equipment: 'Cable', isCustom: false },
+  // Renamed from 'Cable Kickback' — the triceps section already uses that name
+  // for a different movement, and duplicate names break exercise lookup.
+  { name: 'Cable Glute Kickback', muscleGroups: ['Glutes'], equipment: 'Cable', isCustom: false },
   { name: 'Cable Hip Abduction', muscleGroups: ['Glutes'], equipment: 'Cable', isCustom: false },
   // Machine
   { name: 'Hip Thrust Machine', muscleGroups: ['Glutes', 'Hamstrings'], equipment: 'Machine', isCustom: false },
