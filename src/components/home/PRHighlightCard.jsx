@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, getSetting } from '../../db/database'
+import { daysBetween, todayKey } from '../../utils/dates'
 import BentoCard from './BentoCard'
 
 export default function PRHighlightCard() {
@@ -45,12 +46,9 @@ export default function PRHighlightCard() {
     )
   }
 
-  const isRecent = () => {
-    const prDate = new Date(recentPR.date)
-    const now = new Date()
-    const diffDays = Math.floor((now - prDate) / (1000 * 60 * 60 * 24))
-    return diffDays <= 7
-  }
+  // Whole days between calendar dates, so a PR set this morning doesn't read
+  // as "1 day ago" just because of the time of day.
+  const isRecent = () => daysBetween(recentPR.date, todayKey()) <= 7
 
   return (
     <Link to="/progress" className="block">

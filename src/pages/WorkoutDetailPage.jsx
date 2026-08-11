@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Header } from '../components/layout'
 import { Card, Button } from '../components/common'
 import { db, getSetLogsForWorkout, getExerciseById } from '../db/database'
+import { parseDateKey, formatDuration, LOCALE } from '../utils/dates'
 
 export default function WorkoutDetailPage() {
   const { id } = useParams()
@@ -48,25 +49,13 @@ export default function WorkoutDetailPage() {
     return groups
   }, [setLogs])
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateKey) =>
+    parseDateKey(dateKey).toLocaleDateString(LOCALE, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
-  }
-
-  const formatDuration = (startTime, endTime) => {
-    if (!startTime || !endTime) return null
-    const start = new Date(startTime)
-    const end = new Date(endTime)
-    const minutes = Math.round((end - start) / 60000)
-    if (minutes < 60) return `${minutes} minutes`
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${hours}h ${mins}m`
-  }
 
   const totalVolume = setLogs
     .filter((log) => !log.isWarmup)

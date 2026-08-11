@@ -13,6 +13,7 @@ import {
   VOLUME_STATUS,
 } from '../data/volumeLandmarks'
 import { getSetProgression } from '../data/setProgression'
+import { todayKey, shiftDateKey } from '../utils/dates'
 
 export { getSetProgression }
 
@@ -71,9 +72,9 @@ export async function getWeeklySetVolume(programmeId, weekNumber) {
 
 /** Weighted sets per muscle over the last N days — for users not on a programme. */
 export async function getRecentSetVolume(days = 7) {
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  const cutoffDate = cutoff.toISOString().split('T')[0]
+  // Local calendar day, not UTC: the rolling window has to line up with the
+  // days workouts are actually filed under.
+  const cutoffDate = shiftDateKey(todayKey(), -(days - 1))
 
   const logs = await db.workoutLogs.where('date').aboveOrEqual(cutoffDate).toArray()
   return tallyForWorkoutLogs(logs)

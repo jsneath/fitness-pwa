@@ -3,6 +3,7 @@ import { Card } from '../common'
 import SetInput from './SetInput'
 import { useWorkout } from '../../context/WorkoutContext'
 import { getEnhancedProgressionSuggestion, getDefaultRirTarget, getLastSessionSets, db } from '../../db/database'
+import { formatShortDate } from '../../utils/dates'
 
 export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg', templateInfo = null }) {
   const [isExpanded, setIsExpanded] = useState(true)
@@ -259,7 +260,7 @@ export default function ExerciseCard({ exercise, exerciseIndex, weightUnit = 'kg
                 className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-dark-surface-elevated transition-colors"
               >
                 <span className="font-medium uppercase tracking-wider">
-                  Last session — {new Date(lastSession.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  Last session — {formatShortDate(lastSession.date)}
                 </span>
                 <svg
                   className={`w-4 h-4 transition-transform duration-200 ${showLastSession ? 'rotate-180' : ''}`}

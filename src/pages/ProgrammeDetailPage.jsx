@@ -5,6 +5,7 @@ import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
 import { db, getWorkoutTemplates, getTemplateExercises, getAllExercises, advanceWeek, getCompletedWorkoutForWeek, endProgrammeEarly } from '../db/database'
 import { SetRecommendations } from '../components/progress'
+import { formatShortDate } from '../utils/dates'
 import { filterExercises } from '../utils/exerciseSearch'
 
 export default function ProgrammeDetailPage() {
@@ -480,7 +481,7 @@ function TemplateCard({ template, dayNumber, programme, onDelete, onAddExercise,
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {exercises.length} exercises
               {isCompleted && currentWeekWorkout?.date && (
-                <span> • {new Date(currentWeekWorkout.date).toLocaleDateString()}</span>
+                <span> • {formatShortDate(currentWeekWorkout.date)}</span>
               )}
             </p>
           </div>

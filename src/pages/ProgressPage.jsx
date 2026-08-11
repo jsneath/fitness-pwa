@@ -15,6 +15,16 @@ import {
   VolumePanel
 } from '../components/progress'
 import { db, getWorkoutLogs, getBodyMetrics, addBodyMetric, getAllExercises } from '../db/database'
+import { tallyMuscleVolume } from '../data/muscleVolume'
+import {
+  calculateStreak,
+  todayKey,
+  shiftDateKey,
+  recentDateKeys,
+  daysBetween,
+  formatShortDate,
+  formatLongDate,
+} from '../utils/dates'
 
 export default function ProgressPage() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -35,58 +45,32 @@ export default function ProgressPage() {
   }, [workoutLogs])
 
   // Calculate current streak
-  const currentStreak = useMemo(() => {
-    if (!workoutLogs || workoutLogs.length === 0) return 0
+  const currentStreak = useMemo(
+    () => calculateStreak((workoutLogs || []).map((w) => w.date)),
+    [workoutLogs]
+  )
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split('T')[0]
-
-    const workoutSet = new Set(workoutLogs.map(w => w.date))
-    let streak = 0
-    let checkDate = new Date(workoutSet.has(todayStr) ? today : yesterday)
-
-    if (!workoutSet.has(todayStr) && !workoutSet.has(yesterdayStr)) {
-      return 0
-    }
-
-    while (true) {
-      const dateStr = checkDate.toISOString().split('T')[0]
-      if (workoutSet.has(dateStr)) {
-        streak++
-        checkDate.setDate(checkDate.getDate() - 1)
-      } else {
-        break
-      }
-    }
-
-    return streak
-  }, [workoutLogs])
-
-  // Calculate muscle group activity
+  // Muscle group activity over the last 30 days.
+  //
+  // The cutoff used to be calculated and then never applied, so this counted
+  // every set ever logged and the map only ever got more uniform over time.
+  // Sets are weighted by how much each exercise trains each muscle, matching
+  // the Volume tab rather than counting every listed muscle equally.
   const muscleData = useMemo(() => {
-    if (!setLogs || !exercises) return {}
+    if (!setLogs || !exercises || !workoutLogs) return {}
 
-    const last30Days = new Date()
-    last30Days.setDate(last30Days.getDate() - 30)
+    const cutoff = shiftDateKey(todayKey(), -30)
+    const recentWorkoutIds = new Set(
+      workoutLogs.filter((w) => w.date >= cutoff).map((w) => w.id)
+    )
 
-    const muscleCount = {}
+    const byId = new Map(exercises.map((e) => [e.id, e]))
+    const recentSets = setLogs.filter(
+      (s) => recentWorkoutIds.has(s.workoutLogId) && !s.isWarmup
+    )
 
-    setLogs.forEach(set => {
-      const exercise = exercises.find(e => e.id === set.exerciseId)
-      if (exercise?.muscleGroups) {
-        exercise.muscleGroups.forEach(muscle => {
-          const normalizedMuscle = muscle.toLowerCase()
-          muscleCount[normalizedMuscle] = (muscleCount[normalizedMuscle] || 0) + 1
-        })
-      }
-    })
-
-    return muscleCount
-  }, [setLogs, exercises])
+    return tallyMuscleVolume(recentSets, byId)
+  }, [setLogs, exercises, workoutLogs])
 
   // Calculate stats for badges and insights
   const stats = useMemo(() => {
@@ -99,11 +83,11 @@ export default function ProgressPage() {
       thisMonth: 0
     }
 
-    const now = new Date()
-    const weekAgo = new Date(now)
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    const monthAgo = new Date(now)
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    // Compared as 'YYYY-MM-DD' strings, which sort chronologically. Building
+    // Dates from the keys would parse them as UTC midnight and then compare
+    // against a local timestamp, dropping workouts on the boundary day.
+    const weekAgo = shiftDateKey(todayKey(), -7)
+    const monthAgo = shiftDateKey(todayKey(), -30)
 
     const totalVolume = setLogs?.reduce((sum, set) =>
       sum + ((set.weight || 0) * (set.reps || 0)), 0) || 0
@@ -113,17 +97,12 @@ export default function ProgressPage() {
       currentStreak,
       totalPRs: personalRecords?.length || 0,
       totalVolume,
-      thisWeek: workoutLogs.filter(w => new Date(w.date) >= weekAgo).length,
-      thisMonth: workoutLogs.filter(w => new Date(w.date) >= monthAgo).length,
-      recentPRs: personalRecords?.filter(p =>
-        new Date(p.date) >= weekAgo
-      ).length || 0,
-      missedDays: (() => {
-        if (workoutLogs.length === 0) return 0
-        const lastWorkout = new Date(workoutLogs[0]?.date)
-        const daysSince = Math.floor((now - lastWorkout) / (1000 * 60 * 60 * 24))
-        return daysSince
-      })()
+      thisWeek: workoutLogs.filter(w => w.date >= weekAgo).length,
+      thisMonth: workoutLogs.filter(w => w.date >= monthAgo).length,
+      recentPRs: personalRecords?.filter(p => p.date >= weekAgo).length || 0,
+      missedDays: workoutLogs.length === 0
+        ? 0
+        : Math.max(0, daysBetween(workoutLogs[0].date, todayKey()))
     }
   }, [workoutLogs, setLogs, personalRecords, currentStreak])
 
@@ -134,21 +113,15 @@ export default function ProgressPage() {
   const workoutFrequencyData = useMemo(() => {
     if (!workoutLogs) return []
 
-    const last30Days = []
-    const today = new Date()
-
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
-      const count = workoutLogs.filter(w => w.date === dateStr).length
-      last30Days.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        value: count
-      })
+    const countByDate = new Map()
+    for (const workout of workoutLogs) {
+      countByDate.set(workout.date, (countByDate.get(workout.date) || 0) + 1)
     }
 
-    return last30Days
+    return recentDateKeys(30).map((key) => ({
+      date: formatShortDate(key),
+      value: countByDate.get(key) || 0,
+    }))
   }, [workoutLogs])
 
   // Body weight data for chart
@@ -159,7 +132,7 @@ export default function ProgressPage() {
       .slice()
       .reverse()
       .map(m => ({
-        date: new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: formatShortDate(m.date),
         value: m.weight
       }))
   }, [bodyMetrics])
@@ -171,7 +144,7 @@ export default function ProgressPage() {
     if (!weight) return
 
     await addBodyMetric({
-      date: new Date().toISOString().split('T')[0],
+      date: todayKey(),
       weight,
       bodyFat,
       notes: ''
@@ -335,7 +308,7 @@ export default function ProgressPage() {
                         className="flex justify-between py-2 border-b border-slate-100 dark:border-dark-border last:border-0"
                       >
                         <span className="text-slate-500 dark:text-slate-400">
-                          {new Date(metric.date).toLocaleDateString()}
+                          {formatLongDate(metric.date)}
                         </span>
                         <span className="font-medium text-slate-900 dark:text-white">
                           {metric.weight} kg

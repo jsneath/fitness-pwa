@@ -1,6 +1,7 @@
 import { db } from './database'
 import { defaultExercises } from '../data/defaultExercises'
 import { DEFAULT_VOLUME_LANDMARKS } from '../data/volumeLandmarks'
+import { toDateKey } from '../utils/dates'
 
 // Seeding used to read the exercise count, then write, without holding a
 // transaction across the two. React StrictMode invokes App's effect twice in
@@ -45,6 +46,42 @@ async function runSeed() {
   })
 
   await repairDuplicateExercises()
+  await repairWorkoutDates()
+}
+
+/**
+ * Re-files workouts under the correct local calendar day.
+ *
+ * `date` used to be derived with `toISOString()`, which converts to UTC first,
+ * so a session started at 00:30 while the clocks were ahead of UTC was filed
+ * under the previous day. `startTime` is a full timestamp and unaffected, so
+ * the true local day can be recovered from it.
+ *
+ * Only rows that actually disagree are touched, and only when a startTime
+ * exists to derive the day from.
+ */
+export async function repairWorkoutDates() {
+  return db.transaction('rw', db.workoutLogs, async () => {
+    let corrected = 0
+
+    await db.workoutLogs.toCollection().modify((log) => {
+      if (!log.startTime) return
+
+      const started = new Date(log.startTime)
+      if (Number.isNaN(started.getTime())) return
+
+      const actualDay = toDateKey(started)
+      if (log.date !== actualDay) {
+        log.date = actualDay
+        corrected += 1
+      }
+    })
+
+    if (corrected > 0) {
+      console.warn(`Re-filed ${corrected} workout(s) under the correct local date`)
+    }
+    return corrected
+  })
 }
 
 /**
