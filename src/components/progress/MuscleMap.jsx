@@ -1,6 +1,28 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 
+// Which muscle groups feed each region of the diagram.
+//
+// The SVG regions are anatomical ('quads', 'lats', 'abs') while the exercise
+// library uses its own names ('Quadriceps', 'Back', 'Core'). They were
+// previously matched by lowercasing the region name, so quads, lats, abs,
+// obliques and lower back never lit up no matter how much you trained them.
+const REGION_MUSCLES = {
+  chest: ['Chest'],
+  shoulders: ['Shoulders'],
+  biceps: ['Biceps'],
+  forearms: ['Forearms'],
+  abs: ['Core'],
+  obliques: ['Core'],
+  quads: ['Quadriceps'],
+  calves: ['Calves'],
+  traps: ['Traps'],
+  lats: ['Back'],
+  'lower back': ['Back'],
+  glutes: ['Glutes'],
+  hamstrings: ['Hamstrings'],
+}
+
 // Muscle group colors based on workout frequency
 const getIntensityColor = (intensity) => {
   if (intensity === 0) return 'fill-slate-200 dark:fill-dark-border'
@@ -34,16 +56,24 @@ export default function MuscleMap({ muscleData = {}, view = 'front' }) {
 
   const currentPaths = musclePaths[view]
 
-  // Calculate intensity based on workout data
+  // Calculate intensity based on workout data. `muscleData` is keyed by the
+  // exercise library's muscle group names.
   const muscleIntensities = useMemo(() => {
-    const maxCount = Math.max(...Object.values(muscleData), 1)
+    const valueFor = (region) =>
+      (REGION_MUSCLES[region] || []).reduce(
+        (sum, muscle) => sum + (muscleData[muscle] || 0),
+        0
+      )
+
+    const max = Math.max(
+      ...Object.keys(currentPaths).map(valueFor),
+      1
+    )
+
     const intensities = {}
-
-    Object.keys(currentPaths).forEach(muscle => {
-      const count = muscleData[muscle] || muscleData[muscle.replace(' ', '')] || 0
-      intensities[muscle] = count / maxCount
+    Object.keys(currentPaths).forEach((region) => {
+      intensities[region] = valueFor(region) / max
     })
-
     return intensities
   }, [muscleData, currentPaths])
 

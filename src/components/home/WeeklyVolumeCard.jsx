@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/database'
+import { recentDateKeys, parseDateKey, LOCALE } from '../../utils/dates'
 import { AreaChart, Area, ResponsiveContainer } from 'recharts'
 import BentoCard from './BentoCard'
 
@@ -16,19 +17,11 @@ export default function WeeklyVolumeCard() {
     if (!workoutLogs || !setLogs) return []
 
     // Get last 7 days
-    const days = []
-    const today = new Date()
-
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      const dateStr = date.toISOString().split('T')[0]
-      days.push({
-        date: dateStr,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
-        volume: 0
-      })
-    }
+    const days = recentDateKeys(7).map((key) => ({
+      date: key,
+      day: parseDateKey(key).toLocaleDateString(LOCALE, { weekday: 'short' }).charAt(0),
+      volume: 0
+    }))
 
     // Map workouts to days
     const workoutIds = new Set(

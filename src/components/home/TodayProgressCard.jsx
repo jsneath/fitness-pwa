@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/database'
+import { todayKey } from '../../utils/dates'
 import BentoCard from './BentoCard'
 
 export default function TodayProgressCard() {
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayKey()
 
   const todayWorkouts = useLiveQuery(() =>
     db.workoutLogs.where('date').equals(today).toArray()

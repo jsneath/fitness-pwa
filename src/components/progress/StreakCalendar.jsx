@@ -1,36 +1,36 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { todayKey, shiftDateKey, parseDateKey, LOCALE } from '../../utils/dates'
 
 export default function StreakCalendar({ workoutDates = [], weeks = 12 }) {
   const calendarData = useMemo(() => {
-    const data = []
-    const today = new Date()
-    const startDate = new Date(today)
-    startDate.setDate(startDate.getDate() - (weeks * 7) + 1)
+    const today = todayKey()
 
-    // Adjust to start on Sunday
-    const dayOfWeek = startDate.getDay()
-    startDate.setDate(startDate.getDate() - dayOfWeek)
+    // Anchor the grid on the END of the current week, then count back.
+    //
+    // It used to be anchored on the start instead — today minus (weeks * 7)
+    // rounded back to a Sunday — which made the final column the Saturday
+    // *before* the current week. Today was never on the calendar at all, so
+    // neither was any workout done this week.
+    const endKey = shiftDateKey(today, 6 - parseDateKey(today).getDay())
+    const startKey = shiftDateKey(endKey, -(weeks * 7) + 1)
 
     const workoutSet = new Set(workoutDates)
+    const data = []
 
     for (let week = 0; week < weeks; week++) {
       const weekData = []
       for (let day = 0; day < 7; day++) {
-        const currentDate = new Date(startDate)
-        currentDate.setDate(startDate.getDate() + (week * 7) + day)
-        const dateStr = currentDate.toISOString().split('T')[0]
-        const hasWorkout = workoutSet.has(dateStr)
-        const isToday = dateStr === today.toISOString().split('T')[0]
-        const isFuture = currentDate > today
+        const dateStr = shiftDateKey(startKey, week * 7 + day)
+        const asDate = parseDateKey(dateStr)
 
         weekData.push({
           date: dateStr,
-          hasWorkout,
-          isToday,
-          isFuture,
-          day: currentDate.getDate(),
-          month: currentDate.getMonth()
+          hasWorkout: workoutSet.has(dateStr),
+          isToday: dateStr === today,
+          isFuture: dateStr > today,
+          day: asDate.getDate(),
+          month: asDate.getMonth()
         })
       }
       data.push(weekData)
@@ -47,7 +47,7 @@ export default function StreakCalendar({ workoutDates = [], weeks = 12 }) {
       const firstDay = week[0]
       if (firstDay.month !== lastMonth) {
         labels.push({
-          month: new Date(firstDay.date).toLocaleDateString('en-US', { month: 'short' }),
+          month: parseDateKey(firstDay.date).toLocaleDateString(LOCALE, { month: 'short' }),
           weekIndex
         })
         lastMonth = firstDay.month

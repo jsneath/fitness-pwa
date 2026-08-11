@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { saveWorkout } from '../db/database'
+import { toDateKey } from '../utils/dates'
 
 const WorkoutContext = createContext(null)
 
@@ -45,7 +46,9 @@ export function WorkoutProvider({ children }) {
       templateId,
       programmeId,
       weekNumber,
-      date: now.toISOString().split('T')[0],
+      // Local calendar day — toISOString() here filed late-night sessions
+      // under the previous day whenever the clocks were ahead of UTC.
+      date: toDateKey(now),
       startTime: now.toISOString(),
       notes: ''
     })
