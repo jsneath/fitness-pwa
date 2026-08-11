@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Header } from '../components/layout'
 import { Card } from '../components/common'
-import { db, getWorkoutLogs } from '../db/database'
+import { getWorkoutLogs } from '../db/database'
+import { formatMonthYear, formatRelativeDay, formatDuration } from '../utils/dates'
 
 export default function HistoryPage() {
   const workoutLogs = useLiveQuery(() => getWorkoutLogs(100), [])
@@ -13,8 +14,7 @@ export default function HistoryPage() {
 
     const groups = {}
     workoutLogs.forEach((workout) => {
-      const date = new Date(workout.date)
-      const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      const monthYear = formatMonthYear(workout.date)
       if (!groups[monthYear]) {
         groups[monthYear] = []
       }
@@ -22,31 +22,6 @@ export default function HistoryPage() {
     })
     return groups
   }, [workoutLogs])
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    if (dateString === today.toISOString().split('T')[0]) {
-      return 'Today'
-    } else if (dateString === yesterday.toISOString().split('T')[0]) {
-      return 'Yesterday'
-    }
-    return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric' })
-  }
-
-  const formatDuration = (startTime, endTime) => {
-    if (!startTime || !endTime) return null
-    const start = new Date(startTime)
-    const end = new Date(endTime)
-    const minutes = Math.round((end - start) / 60000)
-    if (minutes < 60) return `${minutes}m`
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${hours}h ${mins}m`
-  }
 
   return (
     <>
@@ -68,7 +43,7 @@ export default function HistoryPage() {
                           {workout.notes || 'Workout'}
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatDate(workout.date)}
+                          {formatRelativeDay(workout.date)}
                           {workout.startTime && workout.endTime && (
                             <span className="ml-2">
                               • {formatDuration(workout.startTime, workout.endTime)}

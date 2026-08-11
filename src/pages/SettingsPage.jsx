@@ -6,6 +6,7 @@ import { Card, Button, Modal, Input } from '../components/common'
 import { db, getSetting, setSetting, exportAllData, importAllData, addCustomExercise, deleteCustomExercise } from '../db/database'
 import { useTheme } from '../context/ThemeContext'
 import { VolumeLandmarksEditor } from '../components/progress'
+import { todayKey } from '../utils/dates'
 import { muscleGroups, equipmentTypes } from '../data/defaultExercises'
 
 export default function SettingsPage() {
@@ -57,7 +58,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `fitness-backup-${new Date().toISOString().split('T')[0]}.json`
+      a.download = `fitness-backup-${todayKey()}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)

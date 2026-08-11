@@ -2,24 +2,11 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getWorkoutLogs } from '../../db/database'
+import { formatRelativeDay } from '../../utils/dates'
 import BentoCard from './BentoCard'
 
 export default function RecentWorkoutsCard() {
   const recentWorkouts = useLiveQuery(() => getWorkoutLogs(3), [])
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    if (dateString === today.toISOString().split('T')[0]) {
-      return 'Today'
-    } else if (dateString === yesterday.toISOString().split('T')[0]) {
-      return 'Yesterday'
-    }
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-  }
 
   if (!recentWorkouts || recentWorkouts.length === 0) {
     return (
@@ -63,7 +50,7 @@ export default function RecentWorkoutsCard() {
                   {workout.notes || 'Workout'}
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {formatDate(workout.date)}
+                  {formatRelativeDay(workout.date)}
                 </p>
               </div>
             </motion.div>

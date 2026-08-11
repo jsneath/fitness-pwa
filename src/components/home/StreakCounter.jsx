@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db/database'
+import { calculateStreak } from '../../utils/dates'
 import BentoCard from './BentoCard'
 
 export default function StreakCounter() {
@@ -9,44 +10,10 @@ export default function StreakCounter() {
     db.workoutLogs.orderBy('date').reverse().limit(30).toArray()
   , [])
 
-  const streak = useMemo(() => {
-    if (!workoutLogs || workoutLogs.length === 0) return 0
-
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    let currentStreak = 0
-    let checkDate = new Date(today)
-
-    // Check if we have a workout today or yesterday (to continue streak)
-    const todayStr = today.toISOString().split('T')[0]
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const yesterdayStr = yesterday.toISOString().split('T')[0]
-
-    const workoutDates = new Set(workoutLogs.map(w => w.date))
-
-    // Start counting from today or yesterday
-    if (!workoutDates.has(todayStr)) {
-      if (!workoutDates.has(yesterdayStr)) {
-        return 0 // Streak broken
-      }
-      checkDate = yesterday
-    }
-
-    // Count consecutive days
-    while (true) {
-      const dateStr = checkDate.toISOString().split('T')[0]
-      if (workoutDates.has(dateStr)) {
-        currentStreak++
-        checkDate.setDate(checkDate.getDate() - 1)
-      } else {
-        break
-      }
-    }
-
-    return currentStreak
-  }, [workoutLogs])
+  const streak = useMemo(
+    () => calculateStreak((workoutLogs || []).map((w) => w.date)),
+    [workoutLogs]
+  )
 
   const flameColors = streak > 7 ? 'from-orange-500 to-red-600' : 'from-orange-400 to-orange-500'
 
