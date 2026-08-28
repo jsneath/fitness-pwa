@@ -31,7 +31,6 @@ export default function ExercisePicker({
   const [custom, setCustom] = useState(defaultCustom)
   const [createError, setCreateError] = useState('')
   const [saving, setSaving] = useState(false)
-  const searchRef = useRef(null)
   const handleBackRef = useRef(() => {})
 
   const recents = useLiveQuery(
@@ -52,7 +51,6 @@ export default function ExercisePicker({
     setCreateError('')
     document.body.style.overflow = 'hidden'
 
-    const focusTimer = setTimeout(() => searchRef.current?.focus(), 80)
     const onKey = (event) => {
       if (event.key === 'Escape') {
         event.preventDefault()
@@ -62,7 +60,6 @@ export default function ExercisePicker({
     window.addEventListener('keydown', onKey)
 
     return () => {
-      clearTimeout(focusTimer)
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
@@ -303,7 +300,6 @@ export default function ExercisePicker({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
                 </svg>
                 <input
-                  ref={searchRef}
                   data-testid="exercise-search"
                   type="text"
                   inputMode="search"
