@@ -3,10 +3,9 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Header } from '../components/layout'
 import { Button, Modal, Card, Input } from '../components/common'
-import { ExerciseCard, PRCelebration } from '../components/workout'
+import { ExerciseCard, PRCelebration, ExercisePicker } from '../components/workout'
 import { useWorkout } from '../context/WorkoutContext'
 import { getAllExercises, getSetting, getTemplateExercises, getExerciseById, getActiveProgramme, getWorkoutTemplates } from '../db/database'
-import { filterExercises } from '../utils/exerciseSearch'
 
 export default function WorkoutPage() {
   const navigate = useNavigate()
@@ -22,7 +21,6 @@ export default function WorkoutPage() {
 
   const [showExercisePicker, setShowExercisePicker] = useState(false)
   const [showFinishModal, setShowFinishModal] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [workoutNotes, setWorkoutNotes] = useState('')
   const [weightUnit, setWeightUnit] = useState('kg')
   const [templateInfo, setTemplateInfo] = useState(null)
@@ -101,12 +99,9 @@ export default function WorkoutPage() {
     })
   }
 
-  const filteredExercises = filterExercises(allExercises, searchQuery)
-
   const handleSelectExercise = (exercise) => {
     addExerciseToWorkout(exercise)
     setShowExercisePicker(false)
-    setSearchQuery('')
   }
 
   const handleFinishWorkout = async () => {
@@ -329,42 +324,13 @@ export default function WorkoutPage() {
       </div>
 
 
-      {/* Exercise Picker Modal */}
-      <Modal
+      <ExercisePicker
         isOpen={showExercisePicker}
-        onClose={() => {
-          setShowExercisePicker(false)
-          setSearchQuery('')
-        }}
-        title="Add Exercise"
-      >
-        <div className="space-y-4">
-          <Input
-            type="search"
-            placeholder="Search exercises..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
-          />
-          <div className="max-h-[50vh] overflow-y-auto space-y-2">
-            {filteredExercises.map((exercise) => (
-              <button
-                key={exercise.id}
-                onClick={() => handleSelectExercise(exercise)}
-                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-surface-elevated active:bg-slate-100 dark:active:bg-dark-border border border-slate-200 dark:border-dark-border transition-colors"
-              >
-                <div className="font-medium text-slate-800 dark:text-slate-100">{exercise.name}</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {exercise.equipment} • {exercise.muscleGroups.join(', ')}
-                </div>
-              </button>
-            ))}
-            {filteredExercises.length === 0 && (
-              <p className="text-center text-slate-500 dark:text-slate-400 py-4">No exercises found</p>
-            )}
-          </div>
-        </div>
-      </Modal>
+        onClose={() => setShowExercisePicker(false)}
+        onSelect={handleSelectExercise}
+        exercises={allExercises || []}
+        addedExerciseIds={exercises.map((ex) => ex.id)}
+      />
 
       {/* Finish Workout Modal */}
       <Modal

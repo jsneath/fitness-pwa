@@ -5,8 +5,8 @@ import { Header } from '../components/layout'
 import { Card, Button, Modal, Input } from '../components/common'
 import { db, getWorkoutTemplates, getTemplateExercises, getAllExercises, advanceWeek, getCompletedWorkoutForWeek, endProgrammeEarly } from '../db/database'
 import { SetRecommendations } from '../components/progress'
+import { ExercisePicker } from '../components/workout'
 import { formatShortDate } from '../utils/dates'
-import { filterExercises } from '../utils/exerciseSearch'
 
 export default function ProgrammeDetailPage() {
   const { id } = useParams()
@@ -16,7 +16,6 @@ export default function ProgrammeDetailPage() {
   const [newTemplateName, setNewTemplateName] = useState('')
   const [editingTemplate, setEditingTemplate] = useState(null)
   const [showExercisePicker, setShowExercisePicker] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [showCompleteWeek, setShowCompleteWeek] = useState(false)
   const [showEndProgramme, setShowEndProgramme] = useState(false)
   const [editingExercise, setEditingExercise] = useState(null)
@@ -77,7 +76,6 @@ export default function ProgrammeDetailPage() {
     })
 
     setShowExercisePicker(false)
-    setSearchQuery('')
   }
 
   const handleStartWorkout = (template) => {
@@ -111,8 +109,6 @@ export default function ProgrammeDetailPage() {
     setShowEndProgramme(false)
     navigate('/programmes')
   }
-
-  const filteredExercises = filterExercises(allExercises, searchQuery)
 
   const handleUpdateExercise = async (templateExerciseId, updates) => {
     await db.templateExercises.update(templateExerciseId, updates)
@@ -275,40 +271,15 @@ export default function ProgrammeDetailPage() {
         </div>
       </Modal>
 
-      {/* Exercise Picker Modal */}
-      <Modal
+      <ExercisePicker
         isOpen={showExercisePicker}
         onClose={() => {
           setShowExercisePicker(false)
-          setSearchQuery('')
           setEditingTemplate(null)
         }}
-        title="Add Exercise"
-      >
-        <div className="space-y-4">
-          <Input
-            type="search"
-            placeholder="Search exercises..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
-          />
-          <div className="max-h-[50vh] overflow-y-auto space-y-2">
-            {filteredExercises.map((exercise) => (
-              <button
-                key={exercise.id}
-                onClick={() => handleAddExerciseToTemplate(exercise)}
-                className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-surface dark:bg-dark-surface-elevated active:bg-slate-100 dark:bg-dark-border border border-slate-200 dark:border-dark-border transition-colors"
-              >
-                <div className="font-medium text-slate-800 dark:text-slate-100">{exercise.name}</div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {exercise.equipment} • {exercise.muscleGroups.join(', ')}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </Modal>
+        onSelect={handleAddExerciseToTemplate}
+        exercises={allExercises || []}
+      />
 
       {/* Complete Week Modal */}
       <Modal

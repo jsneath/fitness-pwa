@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node tests/setProgression.test.mjs && node tests/programmeGenerator.test.mjs && node tests/run-dates.mjs",
+    "test": "node tests/setProgression.test.mjs && node tests/programmeGenerator.test.mjs && node tests/run-dates.mjs && node tests/exerciseSearch.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -6,6 +6,8 @@ export const defaultExercises = [
   { name: 'Decline Barbell Bench Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Barbell', isCustom: false },
   { name: 'Close Grip Bench Press', muscleGroups: ['Triceps', 'Chest'], equipment: 'Barbell', isCustom: false },
   { name: 'Floor Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Barbell', isCustom: false },
+  { name: 'Wide Grip Bench Press', muscleGroups: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Barbell', isCustom: false },
+  { name: 'Pause Bench Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Barbell', isCustom: false },
   // Dumbbells
   { name: 'Dumbbell Bench Press', muscleGroups: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Incline Dumbbell Press', muscleGroups: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Dumbbells', isCustom: false },
@@ -21,8 +23,10 @@ export const defaultExercises = [
   { name: 'High Cable Crossover', muscleGroups: ['Chest'], equipment: 'Cable', isCustom: false },
   { name: 'Cable Chest Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Cable', isCustom: false },
   { name: 'Incline Cable Flyes', muscleGroups: ['Chest'], equipment: 'Cable', isCustom: false },
+  { name: 'Cable Flyes', muscleGroups: ['Chest'], equipment: 'Cable', isCustom: false },
   // Machine
   { name: 'Machine Chest Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Machine', isCustom: false },
+  { name: 'Hammer Strength Chest Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Machine', isCustom: false },
   { name: 'Machine Incline Press', muscleGroups: ['Chest', 'Triceps', 'Shoulders'], equipment: 'Machine', isCustom: false },
   { name: 'Machine Decline Press', muscleGroups: ['Chest', 'Triceps'], equipment: 'Machine', isCustom: false },
   { name: 'Pec Deck', muscleGroups: ['Chest'], equipment: 'Machine', isCustom: false },
@@ -42,7 +46,10 @@ export const defaultExercises = [
   // ===== BACK =====
   // Barbell
   { name: 'Deadlift', muscleGroups: ['Back', 'Hamstrings', 'Glutes'], equipment: 'Barbell', isCustom: false },
+  { name: 'Trap Bar Deadlift', muscleGroups: ['Back', 'Hamstrings', 'Quadriceps', 'Glutes'], equipment: 'Barbell', isCustom: false },
   { name: 'Barbell Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Barbell', isCustom: false },
+  { name: 'Yates Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Barbell', isCustom: false },
+  { name: 'Landmine Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Barbell', isCustom: false },
   { name: 'Pendlay Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Barbell', isCustom: false },
   { name: 'T-Bar Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Barbell', isCustom: false },
   { name: 'Rack Pulls', muscleGroups: ['Back'], equipment: 'Barbell', isCustom: false },
@@ -60,6 +67,7 @@ export const defaultExercises = [
   { name: 'Lat Pulldown', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
   { name: 'Wide Grip Lat Pulldown', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
   { name: 'Close Grip Lat Pulldown', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
+  { name: 'Neutral Grip Lat Pulldown', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
   { name: 'Reverse Grip Lat Pulldown', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
   { name: 'Behind Neck Lat Pulldown', muscleGroups: ['Back'], equipment: 'Cable', isCustom: false },
   { name: 'Seated Cable Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
@@ -68,6 +76,7 @@ export const defaultExercises = [
   { name: 'Single Arm Cable Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Cable', isCustom: false },
   { name: 'Face Pulls', muscleGroups: ['Back', 'Shoulders'], equipment: 'Cable', isCustom: false },
   { name: 'Straight Arm Pulldown', muscleGroups: ['Back'], equipment: 'Cable', isCustom: false },
+  { name: 'Cable Pullover', muscleGroups: ['Back'], equipment: 'Cable', isCustom: false },
   { name: 'Cable Shrugs', muscleGroups: ['Traps'], equipment: 'Cable', isCustom: false },
   // Machine
   { name: 'Machine Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Machine', isCustom: false },
@@ -78,6 +87,8 @@ export const defaultExercises = [
   { name: 'Smith Machine Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Machine', isCustom: false },
   { name: 'Machine Shrugs', muscleGroups: ['Traps'], equipment: 'Machine', isCustom: false },
   { name: 'Chest Supported Machine Row', muscleGroups: ['Back', 'Biceps'], equipment: 'Machine', isCustom: false },
+  { name: 'Back Extension', muscleGroups: ['Back', 'Hamstrings', 'Glutes'], equipment: 'Machine', isCustom: false },
+  { name: '45 Degree Back Extension', muscleGroups: ['Back', 'Hamstrings', 'Glutes'], equipment: 'Machine', isCustom: false },
   // Bodyweight
   { name: 'Pull-ups', muscleGroups: ['Back', 'Biceps'], equipment: 'Bodyweight', isCustom: false },
   { name: 'Wide Grip Pull-ups', muscleGroups: ['Back', 'Biceps'], equipment: 'Bodyweight', isCustom: false },
@@ -94,6 +105,7 @@ export const defaultExercises = [
   { name: 'Behind Neck Press', muscleGroups: ['Shoulders', 'Triceps'], equipment: 'Barbell', isCustom: false },
   { name: 'Upright Row', muscleGroups: ['Shoulders', 'Traps'], equipment: 'Barbell', isCustom: false },
   { name: 'Bradford Press', muscleGroups: ['Shoulders', 'Triceps'], equipment: 'Barbell', isCustom: false },
+  { name: 'Landmine Press', muscleGroups: ['Shoulders', 'Chest'], equipment: 'Barbell', isCustom: false },
   // Dumbbells
   { name: 'Dumbbell Shoulder Press', muscleGroups: ['Shoulders', 'Triceps'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Seated Dumbbell Press', muscleGroups: ['Shoulders', 'Triceps'], equipment: 'Dumbbells', isCustom: false },
@@ -163,6 +175,7 @@ export const defaultExercises = [
   { name: 'Dumbbell Skull Crushers', muscleGroups: ['Triceps'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Tricep Kickback', muscleGroups: ['Triceps'], equipment: 'Dumbbells', isCustom: false },
   { name: 'Overhead Dumbbell Extension', muscleGroups: ['Triceps'], equipment: 'Dumbbells', isCustom: false },
+  { name: 'EZ Bar Overhead Extension', muscleGroups: ['Triceps'], equipment: 'Barbell', isCustom: false },
   { name: 'Tate Press', muscleGroups: ['Triceps'], equipment: 'Dumbbells', isCustom: false },
   // Cable
   { name: 'Tricep Pushdown', muscleGroups: ['Triceps'], equipment: 'Cable', isCustom: false },
@@ -175,6 +188,7 @@ export const defaultExercises = [
   // Machine
   { name: 'Machine Tricep Extension', muscleGroups: ['Triceps'], equipment: 'Machine', isCustom: false },
   { name: 'Tricep Dip Machine', muscleGroups: ['Triceps', 'Chest'], equipment: 'Machine', isCustom: false },
+  { name: 'Assisted Dip Machine', muscleGroups: ['Chest', 'Triceps'], equipment: 'Machine', isCustom: false },
   // Bodyweight
   { name: 'Tricep Dips', muscleGroups: ['Triceps', 'Chest'], equipment: 'Bodyweight', isCustom: false },
   { name: 'Bench Dips', muscleGroups: ['Triceps'], equipment: 'Bodyweight', isCustom: false },
@@ -262,6 +276,8 @@ export const defaultExercises = [
   { name: 'Cable Hip Abduction', muscleGroups: ['Glutes'], equipment: 'Cable', isCustom: false },
   // Machine
   { name: 'Hip Thrust Machine', muscleGroups: ['Glutes', 'Hamstrings'], equipment: 'Machine', isCustom: false },
+  { name: 'Smith Machine Hip Thrust', muscleGroups: ['Glutes', 'Hamstrings'], equipment: 'Machine', isCustom: false },
+  { name: 'Reverse Hyperextension', muscleGroups: ['Glutes', 'Hamstrings', 'Back'], equipment: 'Machine', isCustom: false },
   { name: 'Glute Kickback Machine', muscleGroups: ['Glutes'], equipment: 'Machine', isCustom: false },
   { name: 'Hip Abduction Machine', muscleGroups: ['Glutes'], equipment: 'Machine', isCustom: false },
   { name: 'Hip Adduction Machine', muscleGroups: ['Adductors'], equipment: 'Machine', isCustom: false },
@@ -296,6 +312,8 @@ export const defaultExercises = [
   { name: 'Decline Sit-ups', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
   { name: 'V-ups', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
   { name: 'Hanging Leg Raise', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
+  { name: 'Toes to Bar', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
+  { name: "Captain's Chair Leg Raise", muscleGroups: ['Core'], equipment: 'Machine', isCustom: false },
   { name: 'Hanging Knee Raise', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
   { name: 'Lying Leg Raise', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
   { name: 'Ab Wheel Rollout', muscleGroups: ['Core'], equipment: 'Bodyweight', isCustom: false },
