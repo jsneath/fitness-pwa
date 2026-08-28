@@ -328,6 +328,22 @@ export async function getAllExercises() {
   return db.exercises.toArray()
 }
 
+/** Most recently logged unique exercises, newest first. */
+export async function getRecentlyUsedExercises(limit = 8) {
+  const recentLogs = await db.setLogs.orderBy('id').reverse().limit(400).toArray()
+  const seen = new Set()
+  const ids = []
+  for (const log of recentLogs) {
+    if (log.exerciseId == null || seen.has(log.exerciseId)) continue
+    seen.add(log.exerciseId)
+    ids.push(log.exerciseId)
+    if (ids.length >= limit) break
+  }
+  if (ids.length === 0) return []
+  const exercises = await db.exercises.bulkGet(ids)
+  return exercises.filter(Boolean)
+}
+
 export async function addCustomExercise(exercise) {
   // Check if exercise with same name already exists
   const existing = await db.exercises.where('name').equalsIgnoreCase(exercise.name).first()

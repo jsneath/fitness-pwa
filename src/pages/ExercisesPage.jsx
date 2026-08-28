@@ -4,12 +4,17 @@ import { Header } from '../components/layout'
 import { Card, Input, Modal, Button } from '../components/common'
 import { db, getAllExercises } from '../db/database'
 import { muscleGroups, equipmentTypes } from '../data/defaultExercises'
-import { exerciseMatchesQuery } from '../utils/exerciseSearch'
+import { MUSCLE_TILES, EQUIPMENT_CATEGORIES } from '../data/exerciseBrowse'
+import {
+  filterExercisesForPicker,
+  groupByEquipmentCategory,
+  groupByMuscle,
+} from '../utils/exerciseSearch'
 
 export default function ExercisesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMuscle, setSelectedMuscle] = useState('')
-  const [selectedEquipment, setSelectedEquipment] = useState('')
+  const [selectedEquipment, setSelectedEquipment] = useState('all')
   const [showAddModal, setShowAddModal] = useState(false)
   const [newExercise, setNewExercise] = useState({
     name: '',
@@ -19,28 +24,24 @@ export default function ExercisesPage() {
 
   const exercises = useLiveQuery(() => getAllExercises(), [])
 
-  const filteredExercises = useMemo(() => {
-    if (!exercises) return []
-
-    return exercises.filter((exercise) => {
-      const matchesSearch = exerciseMatchesQuery(exercise, searchQuery)
-      const matchesMuscle = !selectedMuscle || exercise.muscleGroups.includes(selectedMuscle)
-      const matchesEquipment = !selectedEquipment || exercise.equipment === selectedEquipment
-      return matchesSearch && matchesMuscle && matchesEquipment
-    })
-  }, [exercises, searchQuery, selectedMuscle, selectedEquipment])
+  const filteredExercises = useMemo(
+    () => filterExercisesForPicker(exercises, {
+      query: searchQuery,
+      muscle: selectedMuscle,
+      equipment: selectedEquipment,
+    }),
+    [exercises, searchQuery, selectedMuscle, selectedEquipment]
+  )
 
   const groupedExercises = useMemo(() => {
-    const groups = {}
-    filteredExercises.forEach((exercise) => {
-      const primaryMuscle = exercise.muscleGroups[0] || 'Other'
-      if (!groups[primaryMuscle]) {
-        groups[primaryMuscle] = []
-      }
-      groups[primaryMuscle].push(exercise)
-    })
-    return groups
-  }, [filteredExercises])
+    if (selectedMuscle) return null
+    return groupByMuscle(filteredExercises)
+  }, [filteredExercises, selectedMuscle])
+
+  const equipmentGroups = useMemo(() => {
+    if (!selectedMuscle) return null
+    return groupByEquipmentCategory(filteredExercises)
+  }, [filteredExercises, selectedMuscle])
 
   const handleAddExercise = async () => {
     if (!newExercise.name || newExercise.muscleGroups.length === 0 || !newExercise.equipment) {
@@ -82,82 +83,83 @@ export default function ExercisesPage() {
       />
 
       <div className="space-y-4 pt-4">
-        {/* Search */}
         <Input
           type="search"
-          placeholder="Search exercises..."
+          placeholder="Search any name — lat raise, OHP, RDL…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
 
-        {/* Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-          <select
-            value={selectedMuscle}
-            onChange={(e) => setSelectedMuscle(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-sm"
-          >
-            <option value="">All Muscles</option>
-            {muscleGroups.map((muscle) => (
-              <option key={muscle} value={muscle}>{muscle}</option>
+        <div className="space-y-3">
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+            <FilterChip
+              active={!selectedMuscle}
+              onClick={() => setSelectedMuscle('')}
+            >
+              All muscles
+            </FilterChip>
+            {MUSCLE_TILES.map((tile) => (
+              <FilterChip
+                key={tile.id}
+                active={selectedMuscle === tile.id}
+                onClick={() => setSelectedMuscle(selectedMuscle === tile.id ? '' : tile.id)}
+              >
+                {tile.label}
+              </FilterChip>
             ))}
-          </select>
-          <select
-            value={selectedEquipment}
-            onChange={(e) => setSelectedEquipment(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-sm"
-          >
-            <option value="">All Equipment</option>
-            {equipmentTypes.map((equip) => (
-              <option key={equip} value={equip}>{equip}</option>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+            {EQUIPMENT_CATEGORIES.map((cat) => (
+              <FilterChip
+                key={cat.id}
+                active={selectedEquipment === cat.id}
+                onClick={() => setSelectedEquipment(cat.id)}
+              >
+                {cat.label}
+              </FilterChip>
             ))}
-          </select>
+          </div>
         </div>
 
-        {/* Exercise List */}
         <div className="space-y-6">
-          {Object.entries(groupedExercises).map(([muscle, muscleExercises]) => (
-            <section key={muscle}>
-              <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                {muscle} ({muscleExercises.length})
-              </h2>
-              <div className="space-y-2">
-                {muscleExercises.map((exercise) => (
-                  <Card key={exercise.id}>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900 dark:text-white">
-                          {exercise.name}
-                          {exercise.isCustom && (
-                            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                              Custom
-                            </span>
-                          )}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {exercise.equipment}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {exercise.muscleGroups.map((muscle) => (
-                            <span
-                              key={muscle}
-                              className="text-xs bg-gray-100 dark:bg-dark-surface-elevated text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
-                            >
-                              {muscle}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          ))}
+          {selectedMuscle
+            ? equipmentGroups?.map((group) => (
+                <section key={group.id}>
+                  <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                    {group.label} ({group.exercises.length})
+                  </h2>
+                  <div className="space-y-2">
+                    {group.exercises.map((exercise) => (
+                      <ExerciseLibraryCard key={exercise.id} exercise={exercise} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            : Object.entries(groupedExercises || {}).map(([muscle, muscleExercises]) => (
+                <section key={muscle}>
+                  <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                    {muscle} ({muscleExercises.length})
+                  </h2>
+                  <div className="space-y-2">
+                    {muscleExercises.map((exercise) => (
+                      <ExerciseLibraryCard key={exercise.id} exercise={exercise} />
+                    ))}
+                  </div>
+                </section>
+              ))}
 
           {filteredExercises.length === 0 && (
             <Card className="text-center py-8">
               <p className="text-gray-500 dark:text-gray-400">No exercises found</p>
+              <button
+                onClick={() => {
+                  setNewExercise((prev) => ({ ...prev, name: searchQuery }))
+                  setShowAddModal(true)
+                }}
+                className="mt-3 text-sm font-semibold text-indigo-500"
+              >
+                {searchQuery.trim() ? `Create “${searchQuery.trim()}”` : 'Add a custom exercise'}
+              </button>
             </Card>
           )}
         </div>
@@ -229,5 +231,53 @@ export default function ExercisesPage() {
         </div>
       </Modal>
     </>
+  )
+}
+
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
+        active
+          ? 'bg-indigo-600 text-white border-indigo-600'
+          : 'bg-white dark:bg-dark-surface text-slate-600 dark:text-slate-300 border-slate-200 dark:border-dark-border'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function ExerciseLibraryCard({ exercise }) {
+  return (
+    <Card>
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-medium text-gray-900 dark:text-white">
+            {exercise.name}
+            {exercise.isCustom && (
+              <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                Custom
+              </span>
+            )}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {exercise.equipment}
+          </p>
+          <div className="flex flex-wrap gap-1 mt-2">
+            {exercise.muscleGroups.map((muscle) => (
+              <span
+                key={muscle}
+                className="text-xs bg-gray-100 dark:bg-dark-surface-elevated text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
+              >
+                {muscle}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }
